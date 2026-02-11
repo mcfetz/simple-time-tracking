@@ -1,0 +1,58 @@
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.db import get_db
+from app.models import User, UserSettings
+from app.schemas import UpdateUserSettingsRequest, UserSettingsResponse
+from app.security import get_current_user
+
+
+router = APIRouter(prefix="/settings", tags=["settings"])
+
+
+@router.get("/me", response_model=UserSettingsResponse)
+def get_my_settings(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    user = db.get(User, current_user.id)
+    settings = user.settings if user else None
+    if settings is None:
+        settings = UserSettings(user_id=current_user.id)
+        db.add(settings)
+        db.commit()
+        db.refresh(settings)
+
+    return UserSettingsResponse(
+        daily_target_minutes=settings.daily_target_minutes,
+        home_office_target_ratio=settings.home_office_target_ratio,
+    )
+
+
+@router.put("/me", response_model=UserSettingsResponse)
+def update_my_settings(
+    payload: UpdateUserSettingsRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    user = db.get(User, current_user.id)
+    settings = user.settings if user else None
+    if settings is None:
+        settings = UserSettings(user_id=current_user.id)
+        db.add(settings)
+
+    if payload.daily_target_minutes is not None:
+        settings.daily_target_minutes = payload.daily_target_minutes
+
+    if payload.home_office_target_ratio is not None:
+        settings.home_office_target_ratio = payload.home_office_target_ratio
+
+    db.commit()
+    db.refresh(settings)
+
+    return UserSettingsResponse(
+        daily_target_minutes=settings.daily_target_minutes,
+        home_office_target_ratio=settings.home_office_target_ratio,
+    )
