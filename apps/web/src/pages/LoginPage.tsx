@@ -38,33 +38,35 @@ export function LoginPage() {
 
   return (
     <div className="page" style={{ paddingTop: 24 }}>
-      <div style={{ display: 'grid', gap: 6 }}>
-        <h1 style={{ margin: 0 }}>Time Tracking</h1>
+      <div className="card" style={{ maxWidth: 520, width: '100%', justifySelf: 'center' }}>
+        <div style={{ display: 'grid', gap: 6 }}>
+          <h1 style={{ margin: 0 }}>Time Tracking</h1>
+          <p className="muted" style={{ margin: 0 }}>
+            Bitte anmelden.
+          </p>
+          {flash ? <div className="warn small">{flash}</div> : null}
+        </div>
+
+        <form onSubmit={onSubmit} style={{ display: 'grid', gap: 12 }}>
+          <label>
+            E-Mail
+            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
+          </label>
+          <label>
+            Passwort
+            <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required />
+          </label>
+
+          {error ? <div className="error">{error}</div> : null}
+          <button type="submit" disabled={loading}>
+            {loading ? '...' : 'Login'}
+          </button>
+        </form>
+
         <p className="muted" style={{ margin: 0 }}>
-          Bitte anmelden.
+          Kein Account? <Link to="/register">Registrieren</Link>
         </p>
-        {flash ? <div className="warn small">{flash}</div> : null}
       </div>
-
-      <form onSubmit={onSubmit} className="card">
-        <label>
-          E-Mail
-          <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
-        </label>
-        <label>
-          Passwort
-          <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required />
-        </label>
-
-        {error ? <div className="error">{error}</div> : null}
-        <button type="submit" disabled={loading}>
-          {loading ? '...' : 'Login'}
-        </button>
-      </form>
-
-      <p className="muted">
-        Kein Account? <Link to="/register">Registrieren</Link>
-      </p>
     </div>
   )
 }
