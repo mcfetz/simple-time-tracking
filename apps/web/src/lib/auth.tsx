@@ -22,13 +22,24 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider(props: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>({ status: 'loading' })
 
+  function markExpiredAndLogout() {
+    sessionStorage.setItem('tt_flash', 'Session abgelaufen. Bitte erneut anmelden.')
+    localStorage.removeItem(USER_CACHE_KEY)
+    setAccessToken(null)
+    setState({ status: 'anonymous' })
+  }
+
   async function refresh() {
     try {
       const data = await apiFetch<AuthResponse>('/auth/refresh', { method: 'POST', retryOn401: false })
       setAccessToken(data.token.access_token)
       localStorage.setItem(USER_CACHE_KEY, JSON.stringify(data.user))
       setState({ status: 'authenticated', user: data.user })
-    } catch {
+    } catch (e) {
+      if ((e as { status?: number })?.status === 401) {
+        markExpiredAndLogout()
+        return
+      }
       const cached = localStorage.getItem(USER_CACHE_KEY)
       if (cached) {
         try {
@@ -71,6 +82,14 @@ export function AuthProvider(props: { children: React.ReactNode }) {
 
   useEffect(() => {
     refresh()
+  }, [])
+
+  useEffect(() => {
+    const onExpired = () => {
+      markExpiredAndLogout()
+    }
+    window.addEventListener('tt:auth-expired', onExpired)
+    return () => window.removeEventListener('tt:auth-expired', onExpired)
   }, [])
 
   useEffect(() => {

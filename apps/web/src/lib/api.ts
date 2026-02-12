@@ -12,6 +12,14 @@ function apiBaseUrl(): string {
 
 let accessToken: string | null = null
 let refreshPromise: Promise<boolean> | null = null
+let authExpiredSignaled = false
+
+function signalAuthExpired() {
+  if (authExpiredSignaled) return
+  authExpiredSignaled = true
+  setAccessToken(null)
+  window.dispatchEvent(new Event('tt:auth-expired'))
+}
 
 export function setAccessToken(token: string | null) {
   accessToken = token
@@ -79,6 +87,8 @@ export async function apiFetch<T>(
     if (ok) {
       return apiFetch<T>(path, { ...opts, retryOn401: false })
     }
+
+    signalAuthExpired()
   }
 
   if (!res.ok) {

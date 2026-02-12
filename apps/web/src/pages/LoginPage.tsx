@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 
@@ -6,10 +6,20 @@ export function LoginPage() {
   const auth = useAuth()
   const nav = useNavigate()
 
+  const [flash, setFlash] = useState<string | null>(null)
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const msg = sessionStorage.getItem('tt_flash')
+    if (msg) {
+      setFlash(msg)
+      sessionStorage.removeItem('tt_flash')
+    }
+  }, [])
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -33,6 +43,7 @@ export function LoginPage() {
         <p className="muted" style={{ margin: 0 }}>
           Bitte anmelden.
         </p>
+        {flash ? <div className="warn small">{flash}</div> : null}
       </div>
 
       <form onSubmit={onSubmit} className="card">

@@ -15,7 +15,7 @@ class Settings(BaseSettings):
 
     jwt_secret_key: str = "change-me"
     jwt_algorithm: str = "HS256"
-    access_token_minutes: int = 15
+    access_token_minutes: int = 60 * 24 * 30
     refresh_token_days: int = 30
 
     cookie_secure: bool = False

@@ -115,18 +115,25 @@ export function AbsencesPage() {
       <section className="card">
         <h2>Liste</h2>
         <div className="table">
-          <div className="thead" style={{ gridTemplateColumns: '140px 140px 1fr 160px' }}>
+          <div
+            className="thead"
+            style={{ gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 0.9fr)' }}
+          >
             <div>Start</div>
             <div>Ende</div>
             <div>Grund</div>
             <div />
           </div>
           {absences.map((a) => (
-            <div key={a.id} className="trow" style={{ gridTemplateColumns: '140px 140px 1fr 160px' }}>
+            <div
+              key={a.id}
+              className="trow"
+              style={{ gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 0.9fr)' }}
+            >
               <div>{a.start_date}</div>
               <div>{a.end_date}</div>
               <div>{a.reason.name}</div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 <button className="secondary" disabled={loading} onClick={() => remove(a.id)}>
                   Löschen
                 </button>

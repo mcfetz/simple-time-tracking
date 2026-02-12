@@ -222,18 +222,22 @@ export function HistoryPage() {
             </button>
           </div>
 
-          <div className="thead" style={{ gridTemplateColumns: '170px 120px 120px 1fr' }}>
+          <div className="thead" style={{ gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr)' }}>
             <div>Zeit</div>
             <div>Typ</div>
             <div>Location</div>
             <div>Aktionen</div>
           </div>
           {g.events.map((e) => (
-            <div key={e.id} className="trow" style={{ gridTemplateColumns: '170px 120px 120px 1fr' }}>
+            <div
+              key={e.id}
+              className="trow"
+              style={{ gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr)' }}
+            >
               <div>{toLocal(e.ts_utc, tz)}</div>
               <div>{e.type}</div>
               <div className="muted">{e.location ?? '-'}</div>
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 <button className="secondary" type="button" disabled={loading} onClick={() => startEdit(e)}>
                   Bearbeiten
                 </button>

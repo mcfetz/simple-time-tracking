@@ -290,14 +290,13 @@ button:disabled {
 
 .heatmap {
   display: grid;
-  grid-template-columns: repeat(14, 10px);
+  grid-template-columns: repeat(14, 1fr);
   gap: 4px;
-  justify-content: start;
-  align-content: start;
+  width: 100%;
 }
 
 .heat {
-  width: 10px;
+  width: 100%;
   height: 10px;
   border-radius: 3px;
   border: 1px solid var(--border);
@@ -425,6 +424,11 @@ button.linkButton:hover {
   display: grid;
   grid-template-columns: 120px 100px 100px 1fr;
   gap: 10px;
+}
+
+.thead > div,
+.trow > div {
+  min-width: 0;
 }
 
 .thead {
