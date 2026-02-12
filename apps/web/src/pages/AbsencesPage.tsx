@@ -18,8 +18,17 @@ export function AbsencesPage() {
   const [newReasonName, setNewReasonName] = useState('')
   const [reasonSaving, setReasonSaving] = useState(false)
 
+  const [manageReasonsOpen, setManageReasonsOpen] = useState(false)
+  const [manageBusyId, setManageBusyId] = useState<number | null>(null)
+
   const today = useMemo(() => new Date().toISOString().slice(0, 10), [])
   const [draft, setDraft] = useState<Draft>({ start_date: today, end_date: today, reason_id: '' })
+
+  async function refreshReasons() {
+    const rs = await apiFetch<AbsenceReason[]>('/absences/reasons')
+    setReasons(rs)
+    return rs
+  }
 
   async function createReason(nameRaw: string) {
     const name = nameRaw.trim()
@@ -28,8 +37,7 @@ export function AbsencesPage() {
     setError(null)
     try {
       const created = await apiFetch<AbsenceReason>('/absences/reasons', { method: 'POST', body: { name } })
-      const rs = await apiFetch<AbsenceReason[]>('/absences/reasons')
-      setReasons(rs)
+      await refreshReasons()
       setDraft((d) => ({ ...d, reason_id: created.id }))
       setNewReasonName('')
       setReasonModalOpen(false)
@@ -48,6 +56,40 @@ export function AbsencesPage() {
     ])
     setReasons(rs)
     setAbsences(as)
+  }
+
+  async function renameReason(id: number, nameRaw: string) {
+    const name = nameRaw.trim()
+    if (!name) return
+    setManageBusyId(id)
+    setError(null)
+    try {
+      await apiFetch<AbsenceReason>(`/absences/reasons/${id}`, { method: 'PUT', body: { name } })
+      await refreshReasons()
+    } catch (e) {
+      setError((e as { message?: string })?.message || 'Fehler')
+    } finally {
+      setManageBusyId(null)
+    }
+  }
+
+  async function deleteReason(id: number) {
+    if (!confirm('Grund wirklich löschen?')) return
+    setManageBusyId(id)
+    setError(null)
+    try {
+      await apiFetch<void>(`/absences/reasons/${id}`, { method: 'DELETE' })
+      const rs = await refreshReasons()
+      setDraft((d) => {
+        if (d.reason_id && d.reason_id === id) return { ...d, reason_id: '' }
+        if (d.reason_id && !rs.some((r) => r.id === d.reason_id)) return { ...d, reason_id: '' }
+        return d
+      })
+    } catch (e) {
+      setError((e as { message?: string })?.message || 'Fehler')
+    } finally {
+      setManageBusyId(null)
+    }
   }
 
   useEffect(() => {
@@ -125,12 +167,17 @@ export function AbsencesPage() {
                 setReasonModalOpen(true)
                 return
               }
+              if (raw === '__manage__') {
+                setManageReasonsOpen(true)
+                return
+              }
 
               setDraft({ ...draft, reason_id: Number(raw) })
             }}
           >
             <option value="">Bitte wählen</option>
             <option value="__new__">+ Neuer Grund…</option>
+            <option value="__manage__">⚙ Gründe verwalten…</option>
             {reasons.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.name}
@@ -214,6 +261,52 @@ export function AbsencesPage() {
                 {reasonSaving ? '...' : 'Anlegen'}
               </button>
             </div>
+          </div>
+        </div>
+      ) : null}
+
+      {manageReasonsOpen ? (
+        <div
+          className="modalOverlay"
+          onMouseDown={() => {
+            if (manageBusyId !== null) return
+            setManageReasonsOpen(false)
+          }}
+        >
+          <div className="modal" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="row">
+              <strong>Abwesenheitsgründe verwalten</strong>
+              <button className="secondary" type="button" disabled={manageBusyId !== null} onClick={() => setManageReasonsOpen(false)}>
+                Schließen
+              </button>
+            </div>
+
+            <div className="table">
+              {reasons.map((r) => (
+                <div key={r.id} className="trow" style={{ gridTemplateColumns: '1fr 120px' }}>
+                  <input
+                    defaultValue={r.name}
+                    disabled={manageBusyId === r.id}
+                    onBlur={(e) => {
+                      const next = e.target.value.trim()
+                      if (next && next !== r.name) {
+                        renameReason(r.id, next).catch(() => undefined)
+                      }
+                    }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <button className="secondary" type="button" disabled={manageBusyId === r.id} onClick={() => deleteReason(r.id)}>
+                      Löschen
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {reasons.length === 0 ? <div className="muted">Keine Gründe.</div> : null}
+            </div>
+
+            <p className="muted small" style={{ margin: 0 }}>
+              Hinweis: Löschen schlägt fehl, wenn der Grund noch von Abwesenheiten verwendet wird.
+            </p>
           </div>
         </div>
       ) : null}
