@@ -162,7 +162,7 @@ export function HistoryPage() {
 
   return (
     <div className="page">
-      <h1>History</h1>
+      <h1 style={{ margin: 0 }}>History</h1>
       <div className="row">
         <span className="muted">{events.length} Einträge</span>
         <button className="secondary" disabled={loading} onClick={() => load()}>

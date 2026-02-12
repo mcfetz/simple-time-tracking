@@ -25,7 +25,7 @@ export function ReportsPage() {
 
   return (
     <div className="page">
-      <h1>Reports</h1>
+      <h1 style={{ margin: 0 }}>Reports</h1>
       {error ? <div className="error">{error}</div> : null}
 
       <div className="grid">

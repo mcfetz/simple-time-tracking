@@ -27,9 +27,13 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="page">
-      <h1>Registrieren</h1>
-      <p className="muted">Neuen Benutzer anlegen.</p>
+    <div className="page" style={{ paddingTop: 24 }}>
+      <div style={{ display: 'grid', gap: 6 }}>
+        <h1 style={{ margin: 0 }}>Registrieren</h1>
+        <p className="muted" style={{ margin: 0 }}>
+          Neuen Benutzer anlegen.
+        </p>
+      </div>
 
       <form onSubmit={onSubmit} className="card">
         <label>

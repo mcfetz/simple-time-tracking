@@ -69,12 +69,12 @@ export function AbsencesPage() {
 
   return (
     <div className="page">
-      <h1>Abwesenheiten</h1>
+      <h1 style={{ margin: 0 }}>Abwesenheiten</h1>
       {error ? <div className="error">{error}</div> : null}
 
       <section className="card">
         <h2>Neu</h2>
-        <div className="grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+          <div className="grid" style={{ gridTemplateColumns: '1fr' }}>
           <label>
             Start
             <input

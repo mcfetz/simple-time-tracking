@@ -1,13 +1,41 @@
 :root {
+  --bg: #f6f7fb;
+  --surface: rgba(255, 255, 255, 0.82);
+  --card: rgba(255, 255, 255, 0.9);
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: rgba(15, 23, 42, 0.08);
+  --shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+
+  --radius: 18px;
+  --radius-sm: 12px;
+
+  --pad: 16px;
+  --gap: 12px;
+
+  --accent: #2563eb;
+  --accent-ink: #ffffff;
+
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  line-height: 1.4;
-  color: #0f172a;
-  background: #f8fafc;
+  line-height: 1.35;
+  color: var(--text);
+  background: var(--bg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
 }
 
 a {
@@ -19,10 +47,30 @@ input,
 select {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.95);
   font-size: 14px;
+  outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: rgba(37, 99, 235, 0.4);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.95);
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
 }
 
 label {
@@ -32,17 +80,20 @@ label {
 }
 
 button {
-  border: 1px solid #0f172a;
-  border-radius: 10px;
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  border-radius: var(--radius-sm);
   padding: 10px 12px;
   font-size: 14px;
-  background: #0f172a;
-  color: white;
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.18);
 }
 
 button.secondary {
-  background: transparent;
-  color: #0f172a;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: none;
 }
 
 button:disabled {
@@ -55,14 +106,32 @@ button:disabled {
   grid-template-rows: auto 1fr;
 }
 
+.desktopOnly {
+  display: none;
+}
+
+.mobileOnly {
+  display: block;
+}
+
+@media (min-width: 900px) {
+  .desktopOnly {
+    display: grid;
+  }
+  .mobileOnly {
+    display: none;
+  }
+}
+
 .header {
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 16px;
   align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e2e8f0;
-  background: white;
+  padding: 12px var(--pad);
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
 }
 
 .brand a {
@@ -76,13 +145,59 @@ button:disabled {
 
 .nav a {
   padding: 8px 10px;
-  border-radius: 10px;
-  color: #334155;
+  border-radius: 999px;
+  color: var(--muted);
 }
 
 .nav a.active {
-  background: #e2e8f0;
-  color: #0f172a;
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--text);
+}
+
+.tabBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(64px + env(safe-area-inset-bottom));
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.78);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+}
+
+.tabItem {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  color: var(--muted);
+  text-decoration: none;
+  border-radius: 14px;
+  padding: 6px 0;
+}
+
+.tabItem.active {
+  color: var(--accent);
+}
+
+.tabIcon {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+}
+
+.tabIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.tabLabel {
+  font-size: 11px;
 }
 
 .headerRight {
@@ -92,19 +207,29 @@ button:disabled {
 }
 
 .main {
-  padding: 16px;
+  padding: var(--pad);
+}
+
+.mainWithTabBar {
+  padding-bottom: calc(16px + 64px + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 900px) {
+  .mainWithTabBar {
+    padding-bottom: var(--pad);
+  }
 }
 
 .page {
   max-width: 980px;
   margin: 0 auto;
   display: grid;
-  gap: 14px;
+  gap: var(--gap);
 }
 
 .grid {
   display: grid;
-  gap: 14px;
+  gap: var(--gap);
 }
 
 @media (min-width: 900px) {
@@ -114,16 +239,17 @@ button:disabled {
 }
 
 .card {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--pad);
+  box-shadow: var(--shadow);
   display: grid;
-  gap: 12px;
+  gap: var(--gap);
 }
 
 .muted {
-  color: #64748b;
+  color: var(--muted);
 }
 
 .small {
@@ -131,27 +257,27 @@ button:disabled {
 }
 
 .error {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.22);
   color: #991b1b;
   padding: 10px 12px;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
 }
 
 .ok {
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.22);
   color: #065f46;
   padding: 10px 12px;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
 }
 
 .warn {
-  background: #fffbeb;
-  border: 1px solid #fde68a;
+  background: rgba(250, 204, 21, 0.18);
+  border: 1px solid rgba(250, 204, 21, 0.28);
   color: #92400e;
   padding: 10px 12px;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
 }
 
 .okText {
@@ -174,7 +300,7 @@ button:disabled {
   width: 10px;
   height: 10px;
   border-radius: 3px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--border);
   position: relative;
 }
 
@@ -203,11 +329,11 @@ button:disabled {
 
 .modal {
   width: min(620px, 100%);
-  background: white;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 12px;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+  box-shadow: var(--shadow);
   max-height: 80vh;
   overflow: auto;
 }

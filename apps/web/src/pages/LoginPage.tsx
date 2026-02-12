@@ -27,9 +27,13 @@ export function LoginPage() {
   }
 
   return (
-    <div className="page">
-      <h1>Time Tracking</h1>
-      <p className="muted">Bitte anmelden.</p>
+    <div className="page" style={{ paddingTop: 24 }}>
+      <div style={{ display: 'grid', gap: 6 }}>
+        <h1 style={{ margin: 0 }}>Time Tracking</h1>
+        <p className="muted" style={{ margin: 0 }}>
+          Bitte anmelden.
+        </p>
+      </div>
 
       <form onSubmit={onSubmit} className="card">
         <label>
