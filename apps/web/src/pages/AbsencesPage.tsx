@@ -14,8 +14,31 @@ export function AbsencesPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
+  const [reasonModalOpen, setReasonModalOpen] = useState(false)
+  const [newReasonName, setNewReasonName] = useState('')
+  const [reasonSaving, setReasonSaving] = useState(false)
+
   const today = useMemo(() => new Date().toISOString().slice(0, 10), [])
   const [draft, setDraft] = useState<Draft>({ start_date: today, end_date: today, reason_id: '' })
+
+  async function createReason(nameRaw: string) {
+    const name = nameRaw.trim()
+    if (!name) return
+    setReasonSaving(true)
+    setError(null)
+    try {
+      const created = await apiFetch<AbsenceReason>('/absences/reasons', { method: 'POST', body: { name } })
+      const rs = await apiFetch<AbsenceReason[]>('/absences/reasons')
+      setReasons(rs)
+      setDraft((d) => ({ ...d, reason_id: created.id }))
+      setNewReasonName('')
+      setReasonModalOpen(false)
+    } catch (e) {
+      setError((e as { message?: string })?.message || 'Fehler')
+    } finally {
+      setReasonSaving(false)
+    }
+  }
 
   async function load() {
     setError(null)
@@ -96,9 +119,18 @@ export function AbsencesPage() {
           Grund
           <select
             value={draft.reason_id}
-            onChange={(e) => setDraft({ ...draft, reason_id: Number(e.target.value) })}
+            onChange={(e) => {
+              const raw = e.target.value
+              if (raw === '__new__') {
+                setReasonModalOpen(true)
+                return
+              }
+
+              setDraft({ ...draft, reason_id: Number(raw) })
+            }}
           >
             <option value="">Bitte wählen</option>
+            <option value="__new__">+ Neuer Grund…</option>
             {reasons.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.name}
@@ -143,6 +175,48 @@ export function AbsencesPage() {
           {absences.length === 0 ? <div className="muted">Keine Abwesenheiten.</div> : null}
         </div>
       </section>
+
+      {reasonModalOpen ? (
+        <div
+          className="modalOverlay"
+          onMouseDown={() => {
+            if (reasonSaving) return
+            setReasonModalOpen(false)
+          }}
+        >
+          <div className="modal" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="row">
+              <strong>Neuer Abwesenheitsgrund</strong>
+              <button className="secondary" type="button" disabled={reasonSaving} onClick={() => setReasonModalOpen(false)}>
+                Schließen
+              </button>
+            </div>
+
+            <label>
+              Name
+              <input
+                value={newReasonName}
+                autoFocus
+                placeholder="z.B. Urlaub"
+                onChange={(e) => setNewReasonName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    createReason(newReasonName).catch(() => undefined)
+                  }
+                }}
+              />
+            </label>
+
+            <div className="row" style={{ marginTop: 10 }}>
+              <div />
+              <button type="button" disabled={reasonSaving || !newReasonName.trim()} onClick={() => createReason(newReasonName)}>
+                {reasonSaving ? '...' : 'Anlegen'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
