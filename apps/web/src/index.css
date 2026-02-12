@@ -439,6 +439,6 @@ button.linkButton:hover {
 
 .trow {
   padding: 10px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 0;
+  border-radius: 0;
 }
