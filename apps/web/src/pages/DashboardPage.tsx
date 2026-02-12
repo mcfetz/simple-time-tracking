@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { apiFetch } from '../lib/api'
 import { deleteDayNote, getDayNote, upsertDayNote } from '../lib/notes'
+import { useAuth } from '../lib/auth'
 import type { CreateClockEventRequest, DailyStatusResponse, MonthReport } from '../lib/types'
 import { enqueueClockEvent, flushClockEventQueue, subscribeQueueCount } from '../lib/offlineQueue'
 
@@ -72,6 +73,7 @@ function geoSupported(): boolean {
 }
 
 export function DashboardPage() {
+  const auth = useAuth()
   const [status, setStatus] = useState<DailyStatusResponse | null>(null)
   const [month, setMonth] = useState<MonthReport | null>(null)
   const [loading, setLoading] = useState(false)
@@ -460,6 +462,12 @@ export function DashboardPage() {
           </div>
         ) : null}
       </section>
+
+      <div className="logoutRow">
+        <button className="linkButton" type="button" onClick={() => auth.logout()}>
+          Logout
+        </button>
+      </div>
     </div>
   )
 }

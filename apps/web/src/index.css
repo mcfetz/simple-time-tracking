@@ -345,6 +345,25 @@ button:disabled {
   gap: 10px;
 }
 
+.logoutRow {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0 0;
+}
+
+button.linkButton {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+button.linkButton:hover {
+  color: var(--text);
+}
+
 .controls {
   display: grid;
   gap: 10px;

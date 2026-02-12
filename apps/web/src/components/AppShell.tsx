@@ -1,4 +1,4 @@
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 
 type Tab = {
@@ -17,7 +17,6 @@ const TABS: Tab[] = [
 
 export function AppShell() {
   const auth = useAuth()
-  const loc = useLocation()
 
   return (
     <div className="shell">
@@ -25,23 +24,7 @@ export function AppShell() {
         <div className="brand">
           <Link to="/">Time Tracking</Link>
         </div>
-        <nav className="nav">
-          <Link className={loc.pathname === '/' ? 'active' : ''} to="/">
-            Dashboard
-          </Link>
-          <Link className={loc.pathname.startsWith('/history') ? 'active' : ''} to="/history">
-            History
-          </Link>
-          <Link className={loc.pathname.startsWith('/reports') ? 'active' : ''} to="/reports">
-            Reports
-          </Link>
-          <Link className={loc.pathname.startsWith('/settings') ? 'active' : ''} to="/settings">
-            Settings
-          </Link>
-          <Link className={loc.pathname.startsWith('/absences') ? 'active' : ''} to="/absences">
-            Abwesenheiten
-          </Link>
-        </nav>
+        <div />
         <div className="headerRight">
           {auth.state.status === 'authenticated' ? <span className="muted small">{auth.state.user.email}</span> : null}
         </div>

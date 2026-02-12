@@ -1,10 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { apiFetch } from '../lib/api'
-import { useAuth } from '../lib/auth'
 import type { AbsenceReason, UserSettings } from '../lib/types'
 
 export function SettingsPage() {
-  const auth = useAuth()
   const [settings, setSettings] = useState<UserSettings | null>(null)
   const [dailyTargetMinutes, setDailyTargetMinutes] = useState<number>(468)
   const [homeOfficeRatio, setHomeOfficeRatio] = useState<number>(0.4)
@@ -102,16 +100,6 @@ export function SettingsPage() {
 
       {settings ? (
         <>
-          <section className="card">
-            <h2>Account</h2>
-            <div className="row">
-              <span className="muted">{auth.state.status === 'authenticated' ? auth.state.user.email : ''}</span>
-              <button className="secondary" type="button" onClick={() => auth.logout()}>
-                Logout
-              </button>
-            </div>
-          </section>
-
           <form className="card" onSubmit={onSubmit}>
             <label>
               Sollarbeitszeit pro Tag (Minuten)
