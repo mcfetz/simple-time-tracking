@@ -385,9 +385,9 @@ button.linkButton:hover {
   gap: 10px;
 }
 
-.dashRow3 {
+.dashStatusRow {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 10px;
 }
 
@@ -407,11 +407,8 @@ button.linkButton:hover {
 }
 
 @media (max-width: 520px) {
-  .dashRow3 {
-    grid-template-columns: 1fr;
-  }
   .dashRow2 {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 }
 

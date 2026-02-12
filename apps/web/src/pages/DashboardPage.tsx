@@ -316,11 +316,14 @@ export function DashboardPage() {
               </div>
             ) : null}
 
-            <div className="dashRow3">
+            <div className="dashStatusRow">
               <div className="dashMetric">
                 <div className="muted small">Status</div>
                 <strong>{status.state}</strong>
               </div>
+            </div>
+
+            <div className="dashRow2">
               <div className="dashMetric">
                 <div className="muted small">Gearbeitet</div>
                 <strong>{formatMinutes(status.worked_minutes)}</strong>
