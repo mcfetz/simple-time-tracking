@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+
 import { apiFetch } from '../lib/api'
+import { useAuth } from '../lib/auth'
+import { deleteDayNote, getDayNote, upsertDayNote } from '../lib/notes'
 import type { ClockEvent } from '../lib/types'
+import { NoteModal } from '../components/NoteModal'
 
 type EditState = {
   id: number
@@ -9,20 +13,54 @@ type EditState = {
   location: ClockEvent['location']
 }
 
-function toLocal(tsUtc: string): string {
+type DayGroup = {
+  date_local: string
+  events: ClockEvent[]
+}
+
+function formatLocalDate(tsUtc: string, tz: string): string {
   const d = new Date(tsUtc)
-  return d.toLocaleString()
+  return new Intl.DateTimeFormat('sv-SE', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(d)
+}
+
+function toLocal(tsUtc: string, tz: string): string {
+  const d = new Date(tsUtc)
+  return d.toLocaleString(undefined, { timeZone: tz })
 }
 
 export function HistoryPage() {
+  const auth = useAuth()
+  const tz = auth.state.status === 'authenticated' ? auth.state.user.timezone : 'UTC'
+
   const [events, setEvents] = useState<ClockEvent[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [edit, setEdit] = useState<EditState | null>(null)
 
+  const [noteOpen, setNoteOpen] = useState(false)
+  const [noteDateLocal, setNoteDateLocal] = useState<string | null>(null)
+  const [noteInitial, setNoteInitial] = useState('')
+  const [noteSaving, setNoteSaving] = useState(false)
+
   const sorted = useMemo(() => {
     return [...events].sort((a, b) => (a.ts_utc < b.ts_utc ? 1 : -1))
   }, [events])
+
+  const grouped = useMemo<DayGroup[]>(() => {
+    const by: Record<string, ClockEvent[]> = {}
+    for (const e of sorted) {
+      const key = formatLocalDate(e.ts_utc, tz)
+      ;(by[key] ??= []).push(e)
+    }
+
+    const keys = Object.keys(by).sort((a, b) => (a < b ? 1 : -1))
+    return keys.map((k) => ({ date_local: k, events: by[k] }))
+  }, [sorted, tz])
 
   async function load() {
     setError(null)
@@ -75,6 +113,50 @@ export function HistoryPage() {
       setError((e as { message?: string })?.message || 'Fehler')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function openNote(dateLocal: string) {
+    setNoteOpen(true)
+    setNoteDateLocal(dateLocal)
+    setNoteSaving(true)
+    setError(null)
+    try {
+      const n = await getDayNote(dateLocal)
+      setNoteInitial(n?.content ?? '')
+    } catch (e) {
+      setError((e as { message?: string })?.message || 'Fehler')
+      setNoteInitial('')
+    } finally {
+      setNoteSaving(false)
+    }
+  }
+
+  async function saveNote(content: string) {
+    if (!noteDateLocal) return
+    setNoteSaving(true)
+    setError(null)
+    try {
+      await upsertDayNote(noteDateLocal, content)
+      setNoteOpen(false)
+    } catch (e) {
+      setError((e as { message?: string })?.message || 'Fehler')
+    } finally {
+      setNoteSaving(false)
+    }
+  }
+
+  async function deleteNote() {
+    if (!noteDateLocal) return
+    setNoteSaving(true)
+    setError(null)
+    try {
+      await deleteDayNote(noteDateLocal)
+      setNoteOpen(false)
+    } catch (e) {
+      setError((e as { message?: string })?.message || 'Fehler')
+    } finally {
+      setNoteSaving(false)
     }
   }
 
@@ -131,29 +213,50 @@ export function HistoryPage() {
         </form>
       ) : null}
 
-      <div className="card">
-        <div className="thead" style={{ gridTemplateColumns: '170px 120px 120px 1fr' }}>
-          <div>Zeit</div>
-          <div>Typ</div>
-          <div>Location</div>
-          <div>Aktionen</div>
-        </div>
-        {sorted.map((e) => (
-          <div key={e.id} className="trow" style={{ gridTemplateColumns: '170px 120px 120px 1fr' }}>
-            <div>{toLocal(e.ts_utc)}</div>
-            <div>{e.type}</div>
-            <div className="muted">{e.location ?? '-'}</div>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button className="secondary" disabled={loading} onClick={() => startEdit(e)}>
-                Bearbeiten
-              </button>
-              <button disabled={loading} onClick={() => onDelete(e.id)}>
-                Löschen
-              </button>
-            </div>
+      {grouped.map((g) => (
+        <section key={g.date_local} className="card">
+          <div className="row">
+            <strong>{g.date_local}</strong>
+            <button className="secondary" type="button" disabled={loading} onClick={() => openNote(g.date_local)}>
+              Notiz
+            </button>
           </div>
-        ))}
-      </div>
+
+          <div className="thead" style={{ gridTemplateColumns: '170px 120px 120px 1fr' }}>
+            <div>Zeit</div>
+            <div>Typ</div>
+            <div>Location</div>
+            <div>Aktionen</div>
+          </div>
+          {g.events.map((e) => (
+            <div key={e.id} className="trow" style={{ gridTemplateColumns: '170px 120px 120px 1fr' }}>
+              <div>{toLocal(e.ts_utc, tz)}</div>
+              <div>{e.type}</div>
+              <div className="muted">{e.location ?? '-'}</div>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button className="secondary" type="button" disabled={loading} onClick={() => startEdit(e)}>
+                  Bearbeiten
+                </button>
+                <button type="button" disabled={loading} onClick={() => onDelete(e.id)}>
+                  Löschen
+                </button>
+              </div>
+            </div>
+          ))}
+        </section>
+      ))}
+
+      {noteDateLocal ? (
+        <NoteModal
+          open={noteOpen}
+          dateLocal={noteDateLocal}
+          initialContent={noteInitial}
+          saving={noteSaving}
+          onClose={() => setNoteOpen(false)}
+          onSave={(c) => saveNote(c)}
+          onDelete={() => deleteNote()}
+        />
+      ) : null}
     </div>
   )
 }

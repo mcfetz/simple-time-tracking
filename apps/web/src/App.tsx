@@ -8,6 +8,7 @@ import { RegisterPage } from './pages/RegisterPage'
 import { ReportsPage } from './pages/ReportsPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { HistoryPage } from './pages/HistoryPage'
+import { AbsencesPage } from './pages/AbsencesPage'
 
 export default function App() {
   const auth = useAuth()
@@ -31,6 +32,7 @@ export default function App() {
       >
         <Route index element={<DashboardPage />} />
         <Route path="history" element={<HistoryPage />} />
+        <Route path="absences" element={<AbsencesPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>

@@ -154,6 +154,64 @@ button:disabled {
   border-radius: 12px;
 }
 
+.okText {
+  color: #065f46;
+}
+
+.errorText {
+  color: #991b1b;
+}
+
+.heatmap {
+  display: grid;
+  grid-template-columns: repeat(14, 10px);
+  gap: 4px;
+  justify-content: start;
+  align-content: start;
+}
+
+.heat {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  position: relative;
+}
+
+.heatNote::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.85);
+  transform: translate(-50%, -50%);
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+}
+
+.modal {
+  width: min(620px, 100%);
+  background: white;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+  max-height: 80vh;
+  overflow: auto;
+}
+
 .row {
   display: flex;
   justify-content: space-between;
@@ -180,6 +238,36 @@ button:disabled {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+}
+
+.dashRow3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.dashRow2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.dashMetric {
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 12px;
+  padding: 10px;
+  display: grid;
+  gap: 4px;
+}
+
+@media (max-width: 520px) {
+  .dashRow3 {
+    grid-template-columns: 1fr;
+  }
+  .dashRow2 {
+    grid-template-columns: 1fr;
+  }
 }
 
 .table {

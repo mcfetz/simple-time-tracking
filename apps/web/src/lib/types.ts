@@ -33,11 +33,16 @@ export type DailyStatusResponse = {
   max_daily_work_exceeded: boolean
   rest_period_minutes: number | null
   rest_period_violation: boolean
+
+  absence?: Absence | null
+
+  overtime_start_date?: string | null
 }
 
 export type UserSettings = {
   daily_target_minutes: number
   home_office_target_ratio: number
+  overtime_start_date?: string | null
 }
 
 export type CreateClockEventRequest = {
@@ -72,6 +77,27 @@ export type ReportDay = {
   max_daily_work_exceeded: boolean
   rest_period_minutes: number | null
   rest_period_violation: boolean
+  absence?: Absence | null
+  has_note?: boolean
+}
+
+export type DayNote = {
+  id: number
+  date_local: string
+  content: string
+  updated_at: string
+}
+
+export type AbsenceReason = {
+  id: number
+  name: string
+}
+
+export type Absence = {
+  id: number
+  start_date: string
+  end_date: string
+  reason: AbsenceReason
 }
 
 export type WeekReport = {

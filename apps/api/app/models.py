@@ -50,6 +50,8 @@ class UserSettings(Base):
     daily_target_minutes: Mapped[int] = mapped_column(Integer, default=468)
     home_office_target_ratio: Mapped[float] = mapped_column(Float, default=0.4)
 
+    overtime_start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+
     user: Mapped[User] = relationship(back_populates="settings")
 
 
@@ -181,4 +183,21 @@ class Absence(Base):
     )
 
     user: Mapped[User] = relationship()
-    reason: Mapped[AbsenceReason] = relationship()
+
+
+class DayNote(Base):
+    __tablename__ = "day_notes"
+
+    __table_args__ = (
+        Index("uq_day_notes_user_date", "user_id", "date_local", unique=True),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    date_local: Mapped[date] = mapped_column(Date, index=True)
+    content: Mapped[str] = mapped_column(String(4000), default="")
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    user: Mapped[User] = relationship()

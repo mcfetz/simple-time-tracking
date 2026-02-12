@@ -9,9 +9,15 @@ from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import ClockEvent, User
+from app.models import Absence, AbsenceReason, ClockEvent, DayNote, User
 from app.reporting import compute_day_summary, day_bounds_utc, iter_local_days
-from app.schemas import MonthReportResponse, ReportDay, WeekReportResponse
+from app.schemas import (
+    AbsenceReasonResponse,
+    AbsenceResponse,
+    MonthReportResponse,
+    ReportDay,
+    WeekReportResponse,
+)
 from app.security import get_current_user
 
 
@@ -57,6 +63,28 @@ def week_report(
     )
     events = list(db.scalars(stmt).all())
 
+    abs_stmt = (
+        select(Absence)
+        .where(Absence.user_id == current_user.id)
+        .where(Absence.start_date < week_end)
+        .where(Absence.end_date >= week_start)
+    )
+    absences = list(db.scalars(abs_stmt).all())
+
+    note_stmt = (
+        select(DayNote.date_local)
+        .where(DayNote.user_id == current_user.id)
+        .where(and_(DayNote.date_local >= week_start, DayNote.date_local < week_end))
+    )
+    note_days = {d.isoformat() for d in db.execute(note_stmt).scalars().all()}
+    reason_ids = {a.reason_id for a in absences}
+    reasons: dict[int, AbsenceReason] = {}
+    if reason_ids:
+        for r in db.scalars(
+            select(AbsenceReason).where(AbsenceReason.id.in_(reason_ids))
+        ).all():
+            reasons[r.id] = r
+
     first_come_ts: dict[str, datetime] = {}
     last_go_ts: dict[str, datetime] = {}
     for e in events:
@@ -99,6 +127,19 @@ def week_report(
             rest_period_minutes=rest_minutes,
             rest_period_violation=rest_violation,
         )
+
+        absence_out: AbsenceResponse | None = None
+        for a in absences:
+            if a.start_date <= d <= a.end_date:
+                r = reasons.get(a.reason_id)
+                if r is not None:
+                    absence_out = AbsenceResponse(
+                        id=a.id,
+                        start_date=a.start_date.isoformat(),
+                        end_date=a.end_date.isoformat(),
+                        reason=AbsenceReasonResponse(id=r.id, name=r.name),
+                    )
+                break
         days.append(
             ReportDay(
                 date_local=summary.date_local,
@@ -115,6 +156,8 @@ def week_report(
                 max_daily_work_exceeded=summary.max_daily_work_exceeded,
                 rest_period_minutes=summary.rest_period_minutes,
                 rest_period_violation=summary.rest_period_violation,
+                absence=absence_out,
+                has_note=summary.date_local in note_days,
             )
         )
         total_worked += summary.worked_minutes
@@ -169,6 +212,28 @@ def month_report(
     )
     events = list(db.scalars(stmt).all())
 
+    abs_stmt = (
+        select(Absence)
+        .where(Absence.user_id == current_user.id)
+        .where(Absence.start_date < month_end)
+        .where(Absence.end_date >= month_start)
+    )
+    absences = list(db.scalars(abs_stmt).all())
+
+    note_stmt = (
+        select(DayNote.date_local)
+        .where(DayNote.user_id == current_user.id)
+        .where(and_(DayNote.date_local >= month_start, DayNote.date_local < month_end))
+    )
+    note_days = {d.isoformat() for d in db.execute(note_stmt).scalars().all()}
+    reason_ids = {a.reason_id for a in absences}
+    reasons: dict[int, AbsenceReason] = {}
+    if reason_ids:
+        for r in db.scalars(
+            select(AbsenceReason).where(AbsenceReason.id.in_(reason_ids))
+        ).all():
+            reasons[r.id] = r
+
     first_come_ts: dict[str, datetime] = {}
     last_go_ts: dict[str, datetime] = {}
     for e in events:
@@ -214,6 +279,19 @@ def month_report(
             rest_period_minutes=rest_minutes,
             rest_period_violation=rest_violation,
         )
+
+        absence_out: AbsenceResponse | None = None
+        for a in absences:
+            if a.start_date <= d <= a.end_date:
+                r = reasons.get(a.reason_id)
+                if r is not None:
+                    absence_out = AbsenceResponse(
+                        id=a.id,
+                        start_date=a.start_date.isoformat(),
+                        end_date=a.end_date.isoformat(),
+                        reason=AbsenceReasonResponse(id=r.id, name=r.name),
+                    )
+                break
         days.append(
             ReportDay(
                 date_local=summary.date_local,
@@ -230,6 +308,8 @@ def month_report(
                 max_daily_work_exceeded=summary.max_daily_work_exceeded,
                 rest_period_minutes=summary.rest_period_minutes,
                 rest_period_violation=summary.rest_period_violation,
+                absence=absence_out,
+                has_note=summary.date_local in note_days,
             )
         )
         total_worked += summary.worked_minutes

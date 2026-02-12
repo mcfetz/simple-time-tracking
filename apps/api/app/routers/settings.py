@@ -28,6 +28,9 @@ def get_my_settings(
     return UserSettingsResponse(
         daily_target_minutes=settings.daily_target_minutes,
         home_office_target_ratio=settings.home_office_target_ratio,
+        overtime_start_date=settings.overtime_start_date.isoformat()
+        if settings.overtime_start_date
+        else None,
     )
 
 
@@ -49,10 +52,16 @@ def update_my_settings(
     if payload.home_office_target_ratio is not None:
         settings.home_office_target_ratio = payload.home_office_target_ratio
 
+    if payload.overtime_start_date is not None:
+        settings.overtime_start_date = payload.overtime_start_date
+
     db.commit()
     db.refresh(settings)
 
     return UserSettingsResponse(
         daily_target_minutes=settings.daily_target_minutes,
         home_office_target_ratio=settings.home_office_target_ratio,
+        overtime_start_date=settings.overtime_start_date.isoformat()
+        if settings.overtime_start_date
+        else None,
     )

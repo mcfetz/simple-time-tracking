@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.clock_validation import validate_event_fields, validate_sequence
 from app.models import ClockEvent, User, utc_now
+from ..absence_service import local_date_from_utc, user_has_absence_on_date
 from app.schemas import ClockEventResponse, CreateClockEventRequest, Geo
 from app.schemas import UpdateClockEventRequest
 from app.security import get_current_user
@@ -148,6 +149,14 @@ def create_event(
                     detail="Event timestamp must be after last event",
                 )
             now = last_ts + timedelta(microseconds=1)
+
+    day_local = local_date_from_utc(now, current_user.timezone)
+    absence = user_has_absence_on_date(db, user_id=current_user.id, day_local=day_local)
+    if absence is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot create clock events on absence days",
+        )
 
     event = ClockEvent(
         user_id=current_user.id,
@@ -295,6 +304,15 @@ def update_event(
         event.type = new_type
     if payload.location is not None:
         event.location = new_location
+
+    day_local = local_date_from_utc(_as_utc(event.ts_utc), current_user.timezone)
+    absence = user_has_absence_on_date(db, user_id=current_user.id, day_local=day_local)
+    if absence is not None:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot update clock events on absence days",
+        )
 
     events = _load_user_events(db, current_user.id)
     events.sort(key=lambda e: _as_utc(e.ts_utc))

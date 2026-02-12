@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import desc, select
+from sqlalchemy import and_, desc, select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import ClockEvent, User
-from app.schemas import DailyStatusResponse
+from app.models import Absence, AbsenceReason, ClockEvent, User
+from app.schemas import AbsenceReasonResponse, AbsenceResponse, DailyStatusResponse
 from app.security import get_current_user
 from app.time_calc import (
     as_utc,
@@ -45,6 +45,24 @@ def today(
     now_utc = datetime.now(timezone.utc)
     tz = current_user.timezone
     start_utc, end_utc, date_local = _day_bounds_utc(now_utc, tz)
+    day_local = date.fromisoformat(date_local)
+
+    absence_out: AbsenceResponse | None = None
+    absence = db.scalar(
+        select(Absence)
+        .where(Absence.user_id == current_user.id)
+        .where(and_(Absence.start_date <= day_local, Absence.end_date >= day_local))
+        .limit(1)
+    )
+    if absence is not None:
+        reason = db.get(AbsenceReason, absence.reason_id)
+        if reason is not None:
+            absence_out = AbsenceResponse(
+                id=absence.id,
+                start_date=absence.start_date.isoformat(),
+                end_date=absence.end_date.isoformat(),
+                reason=AbsenceReasonResponse(id=reason.id, name=reason.name),
+            )
 
     stmt = (
         select(ClockEvent)
@@ -176,4 +194,8 @@ def today(
         max_daily_work_exceeded=max_daily_work_exceeded,
         rest_period_minutes=rest_period_minutes,
         rest_period_violation=rest_period_violation,
+        absence=absence_out,
+        overtime_start_date=current_user.settings.overtime_start_date.isoformat()
+        if current_user.settings and current_user.settings.overtime_start_date
+        else None,
     )

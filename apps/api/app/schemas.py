@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime
 from datetime import date
+from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -44,6 +44,17 @@ class AbsenceResponse(BaseModel):
     start_date: str
     end_date: str
     reason: AbsenceReasonResponse
+
+
+class DayNoteResponse(BaseModel):
+    id: int
+    date_local: str
+    content: str
+    updated_at: str
+
+
+class UpsertDayNoteRequest(BaseModel):
+    content: str = Field(max_length=4000)
 
 
 class CreateAbsenceRequest(BaseModel):
@@ -91,15 +102,21 @@ class DailyStatusResponse(BaseModel):
     rest_period_minutes: int | None
     rest_period_violation: bool
 
+    absence: AbsenceResponse | None = None
+
+    overtime_start_date: str | None = None
+
 
 class UserSettingsResponse(BaseModel):
     daily_target_minutes: int
     home_office_target_ratio: float
+    overtime_start_date: str | None = None
 
 
 class UpdateUserSettingsRequest(BaseModel):
     daily_target_minutes: int | None = Field(default=None, ge=0, le=24 * 60)
     home_office_target_ratio: float | None = Field(default=None, ge=0.0, le=1.0)
+    overtime_start_date: date | None = None
 
 
 class ReportDay(BaseModel):
@@ -118,6 +135,10 @@ class ReportDay(BaseModel):
     max_daily_work_exceeded: bool
     rest_period_minutes: int | None
     rest_period_violation: bool
+
+    absence: AbsenceResponse | None = None
+
+    has_note: bool = False
 
 
 class WeekReportResponse(BaseModel):

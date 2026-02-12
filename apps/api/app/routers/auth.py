@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import User, UserSettings, utc_now
+from app.models import AbsenceReason, User, UserSettings, utc_now
 from app.schemas import (
     AuthResponse,
     LoginRequest,
@@ -61,6 +61,15 @@ def register(
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    db.add_all(
+        [
+            AbsenceReason(user_id=user.id, name="Urlaub"),
+            AbsenceReason(user_id=user.id, name="Krankheit"),
+            AbsenceReason(user_id=user.id, name="Dienstreise"),
+        ]
+    )
+    db.commit()
 
     refresh = create_refresh_token()
     create_auth_session(db=db, user_id=user.id, refresh_token=refresh)

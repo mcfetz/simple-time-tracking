@@ -24,6 +24,9 @@ export function AppShell() {
           <Link className={loc.pathname.startsWith('/settings') ? 'active' : ''} to="/settings">
             Settings
           </Link>
+          <Link className={loc.pathname.startsWith('/absences') ? 'active' : ''} to="/absences">
+            Abwesenheiten
+          </Link>
         </nav>
         <div className="headerRight">
           {auth.state.status === 'authenticated' ? (
