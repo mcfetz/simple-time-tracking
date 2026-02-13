@@ -40,7 +40,7 @@ export function LoginPage() {
     <div className="page" style={{ paddingTop: 24 }}>
       <div className="card" style={{ maxWidth: 440, width: '100%', justifySelf: 'center' }}>
         <div style={{ display: 'grid', gap: 6 }}>
-          <div style={{ display: 'grid', gap: 2 }}>
+          <div style={{ display: 'grid', gap: 2, justifyItems: 'center', textAlign: 'center' }}>
             <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: 0.3 }}>STT</div>
             <div className="muted" style={{ fontSize: 14 }}>
               Simple Time Tracking
@@ -52,7 +52,7 @@ export function LoginPage() {
           {flash ? <div className="warn small">{flash}</div> : null}
         </div>
 
-        <form onSubmit={onSubmit} style={{ display: 'grid', gap: 12 }}>
+        <form onSubmit={onSubmit} style={{ display: 'grid', gap: 12, marginTop: 8 }}>
           <label>
             E-Mail
             <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />

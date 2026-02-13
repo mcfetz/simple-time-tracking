@@ -6,20 +6,20 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   server: {
     host: '0.0.0.0',
-    allowedHosts: ['dev-hdn-5173.ret-goto.gewkoelnag.de'],
+    allowedHosts: true,
   },
   plugins: [
     react(),
-    VitePWA({
+      VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'robots.txt'],
-      manifest: {
-        name: 'Time Tracking',
-        short_name: 'TimeTracking',
-        description: 'Arbeitszeiten-Tracking (PWA)',
-        theme_color: '#111827',
-        background_color: '#ffffff',
-        display: 'standalone',
+        manifest: {
+          name: 'Simple Time Tracking',
+          short_name: 'STT',
+          description: 'Simple Time Tracking (PWA)',
+          theme_color: '#111827',
+          background_color: '#ffffff',
+          display: 'standalone',
         start_url: '/',
         scope: '/',
         icons: [
