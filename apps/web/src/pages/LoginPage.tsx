@@ -56,7 +56,7 @@ export function LoginPage() {
               }}
             >
               <span aria-hidden="true" style={{ width: 28, height: 28, display: 'grid', placeItems: 'center' }}>
-                <IconHistory className="" />
+                <IconHistory className="authLogoIcon" />
               </span>
               <span>STT</span>
             </div>

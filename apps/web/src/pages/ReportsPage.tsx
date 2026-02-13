@@ -76,7 +76,7 @@ export function ReportsPage() {
                 type="button"
                 onClick={() => setWeekParam(shiftIsoDate((week?.week_start_local ?? weekStart) || todayLocal, -7))}
               >
-                ◀
+                ‹
               </button>
               <input
                 type="date"
@@ -88,7 +88,7 @@ export function ReportsPage() {
                 type="button"
                 onClick={() => setWeekParam(shiftIsoDate((week?.week_start_local ?? weekStart) || todayLocal, 7))}
               >
-                ▶
+                ›
               </button>
             </div>
           </div>
@@ -147,7 +147,7 @@ export function ReportsPage() {
                   setMonthParam(shiftMonthKey((monthKey || month?.month_start_local?.slice(0, 7)) ?? todayLocal.slice(0, 7), -1))
                 }
               >
-                ◀
+                ‹
               </button>
               <input
                 type="month"
@@ -161,7 +161,7 @@ export function ReportsPage() {
                   setMonthParam(shiftMonthKey((monthKey || month?.month_start_local?.slice(0, 7)) ?? todayLocal.slice(0, 7), 1))
                 }
               >
-                ▶
+                ›
               </button>
             </div>
           </div>

@@ -197,11 +197,11 @@ export function HistoryPage() {
         </span>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}>
           <button className="secondary" type="button" disabled={loading || !startParam} onClick={() => setStartParam(shiftIsoDate(startParam, -7))}>
-            ◀
+            ‹
           </button>
           <input type="date" value={startParam} onChange={(e) => setStartParam(e.target.value)} />
           <button className="secondary" type="button" disabled={loading || !startParam} onClick={() => setStartParam(shiftIsoDate(startParam, 7))}>
-            ▶
+            ›
           </button>
         </div>
       </div>
