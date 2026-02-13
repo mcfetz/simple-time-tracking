@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
 import type { MonthReport, WeekReport } from '../lib/types'
+import { useI18n } from '../lib/i18n'
 
 function fmtMinutes(min: number): string {
   const h = Math.floor(min / 60)
@@ -10,6 +11,7 @@ function fmtMinutes(min: number): string {
 }
 
 export function ReportsPage() {
+  const { t } = useI18n()
   const [search, setSearch] = useSearchParams()
 
   const todayLocal = useMemo(() => new Date().toISOString().slice(0, 10), [])
@@ -55,18 +57,18 @@ export function ReportsPage() {
       const m = await apiFetch<MonthReport>(monthKey ? `/reports/month?month=${encodeURIComponent(monthKey)}` : '/reports/month')
       setWeek(w)
       setMonth(m)
-    })().catch((e) => setError((e as { message?: string })?.message || 'Fehler'))
+    })().catch((e) => setError((e as { message?: string })?.message || t('errors.generic')))
   }, [weekStart, monthKey])
 
   return (
     <div className="page">
-      <h1 style={{ margin: 0 }}>Reports</h1>
+      <h1 style={{ margin: 0 }}>{t('reports.title')}</h1>
       {error ? <div className="error">{error}</div> : null}
 
       <div className="grid">
         <section className="card">
           <div className="row" style={{ alignItems: 'center' }}>
-            <h2 style={{ margin: 0 }}>Woche</h2>
+            <h2 style={{ margin: 0 }}>{t('reports.week')}</h2>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}>
               <button
                 className="secondary"
@@ -90,21 +92,21 @@ export function ReportsPage() {
             </div>
           </div>
           {!week ? (
-            <div className="muted">...</div>
+            <div className="muted">{t('common.loading')}</div>
           ) : (
             <>
               <div className="row">
-                <span className="muted">Zeitraum</span>
+                <span className="muted">{t('reports.period')}</span>
                 <strong>
                   {week.week_start_local} – {week.week_end_local_exclusive}
                 </strong>
               </div>
               <div className="row">
-                <span className="muted">Arbeit</span>
+                <span className="muted">{t('reports.work')}</span>
                 <strong>{fmtMinutes(week.total_worked_minutes)}</strong>
               </div>
               <div className="row">
-                <span className="muted">Pause</span>
+                <span className="muted">{t('reports.break')}</span>
                 <strong>{fmtMinutes(week.total_break_minutes)}</strong>
               </div>
 
@@ -116,14 +118,14 @@ export function ReportsPage() {
                       <span className="muted small">{fmtMinutes(d.worked_minutes)}</span>
                     </div>
                     <div className="row">
-                      <span className="muted small">Pause</span>
+                      <span className="muted small">{t('reports.break')}</span>
                       <span className="muted small">{fmtMinutes(d.break_minutes)}</span>
                     </div>
                     {d.max_daily_work_exceeded || d.rest_period_violation || !d.break_compliant_total ? (
                       <div className="muted small">
-                        {d.max_daily_work_exceeded ? '>10h ' : ''}
-                        {d.rest_period_violation ? 'Ruhezeit<11h ' : ''}
-                        {!d.break_compliant_total ? 'Pause' : ''}
+                        {d.max_daily_work_exceeded ? `${t('reports.warningOver10h')} ` : ''}
+                        {d.rest_period_violation ? `${t('reports.warningRest11h')} ` : ''}
+                        {!d.break_compliant_total ? t('reports.warningBreak') : ''}
                       </div>
                     ) : null}
                   </div>
@@ -135,7 +137,7 @@ export function ReportsPage() {
 
         <section className="card">
           <div className="row" style={{ alignItems: 'center' }}>
-            <h2 style={{ margin: 0 }}>Monat</h2>
+            <h2 style={{ margin: 0 }}>{t('reports.month')}</h2>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}>
               <button
                 className="secondary"
@@ -163,23 +165,23 @@ export function ReportsPage() {
             </div>
           </div>
           {!month ? (
-            <div className="muted">...</div>
+            <div className="muted">{t('common.loading')}</div>
           ) : (
             <>
               <div className="row">
-                <span className="muted">Zeitraum</span>
+                <span className="muted">{t('reports.period')}</span>
                 <strong>
                   {month.month_start_local} – {month.month_end_local_exclusive}
                 </strong>
               </div>
               <div className="row">
-                <span className="muted">Arbeit</span>
+                <span className="muted">{t('reports.work')}</span>
                 <strong>{fmtMinutes(month.total_worked_minutes)}</strong>
               </div>
               <div className="row">
-                <span className="muted">Home Office</span>
+                <span className="muted">{t('reports.homeOffice')}</span>
                 <strong>
-                  {month.home_office_days}/{month.worked_days} ({Math.round(month.home_office_ratio * 100)}% / Ziel{' '}
+                  {month.home_office_days}/{month.worked_days} ({Math.round(month.home_office_ratio * 100)}% / {t('reports.target')}{' '}
                   {Math.round(month.home_office_target_ratio * 100)}%)
                 </strong>
               </div>

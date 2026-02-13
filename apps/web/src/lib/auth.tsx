@@ -1,8 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { apiFetch, setAccessToken } from './api'
+import type { Lang } from './i18n'
 import type { AuthResponse } from './types'
 
 const USER_CACHE_KEY = 'tt_user_cache_v1'
+const LANG_KEY = 'stt_lang_v1'
 
 type AuthState =
   | { status: 'loading' }
@@ -23,7 +25,11 @@ export function AuthProvider(props: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>({ status: 'loading' })
 
   function markExpiredAndLogout() {
-    sessionStorage.setItem('tt_flash', 'Session abgelaufen. Bitte erneut anmelden.')
+    const lang = (localStorage.getItem(LANG_KEY) as Lang | null) || 'en'
+    sessionStorage.setItem(
+      'tt_flash',
+      lang === 'de' ? 'Session abgelaufen. Bitte erneut anmelden.' : 'Session expired. Please sign in again.',
+    )
     localStorage.removeItem(USER_CACHE_KEY)
     setAccessToken(null)
     setState({ status: 'anonymous' })

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { apiFetch } from '../lib/api'
 import type { Absence, AbsenceReason } from '../lib/types'
+import { useI18n } from '../lib/i18n'
 
 type Draft = {
   start_date: string
@@ -9,6 +10,7 @@ type Draft = {
 }
 
 export function AbsencesPage() {
+  const { t } = useI18n()
   const [reasons, setReasons] = useState<AbsenceReason[]>([])
   const [absences, setAbsences] = useState<Absence[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -42,7 +44,7 @@ export function AbsencesPage() {
       setNewReasonName('')
       setReasonModalOpen(false)
     } catch (e) {
-      setError((e as { message?: string })?.message || 'Fehler')
+      setError((e as { message?: string })?.message || t('errors.generic'))
     } finally {
       setReasonSaving(false)
     }
@@ -67,14 +69,14 @@ export function AbsencesPage() {
       await apiFetch<AbsenceReason>(`/absences/reasons/${id}`, { method: 'PUT', body: { name } })
       await refreshReasons()
     } catch (e) {
-      setError((e as { message?: string })?.message || 'Fehler')
+      setError((e as { message?: string })?.message || t('errors.generic'))
     } finally {
       setManageBusyId(null)
     }
   }
 
   async function deleteReason(id: number) {
-    if (!confirm('Grund wirklich löschen?')) return
+    if (!confirm(t('confirm.deleteReason'))) return
     setManageBusyId(id)
     setError(null)
     try {
@@ -86,14 +88,14 @@ export function AbsencesPage() {
         return d
       })
     } catch (e) {
-      setError((e as { message?: string })?.message || 'Fehler')
+      setError((e as { message?: string })?.message || t('errors.generic'))
     } finally {
       setManageBusyId(null)
     }
   }
 
   useEffect(() => {
-    load().catch((e) => setError((e as { message?: string })?.message || 'Fehler'))
+    load().catch((e) => setError((e as { message?: string })?.message || t('errors.generic')))
   }, [])
 
   async function create() {
@@ -112,21 +114,21 @@ export function AbsencesPage() {
       setDraft({ ...draft })
       await load()
     } catch (e) {
-      setError((e as { message?: string })?.message || 'Fehler')
+      setError((e as { message?: string })?.message || t('errors.generic'))
     } finally {
       setLoading(false)
     }
   }
 
   async function remove(id: number) {
-    if (!confirm('Abwesenheit wirklich löschen?')) return
+    if (!confirm(t('confirm.deleteAbsence'))) return
     setLoading(true)
     setError(null)
     try {
       await apiFetch<void>(`/absences/${id}`, { method: 'DELETE' })
       await load()
     } catch (e) {
-      setError((e as { message?: string })?.message || 'Fehler')
+      setError((e as { message?: string })?.message || t('errors.generic'))
     } finally {
       setLoading(false)
     }
@@ -134,14 +136,14 @@ export function AbsencesPage() {
 
   return (
     <div className="page">
-      <h1 style={{ margin: 0 }}>Abwesenheiten</h1>
+      <h1 style={{ margin: 0 }}>{t('absences.title')}</h1>
       {error ? <div className="error">{error}</div> : null}
 
       <section className="card">
-        <h2>Neu</h2>
+        <h2>{t('absences.new')}</h2>
           <div className="grid" style={{ gridTemplateColumns: '1fr' }}>
           <label>
-            Start
+            {t('absences.start')}
             <input
               type="date"
               value={draft.start_date}
@@ -149,7 +151,7 @@ export function AbsencesPage() {
             />
           </label>
           <label>
-            Ende
+            {t('absences.end')}
             <input
               type="date"
               value={draft.end_date}
@@ -158,15 +160,15 @@ export function AbsencesPage() {
           </label>
         </div>
         <label>
-          Grund
+          {t('absences.reason')}
           <select
             value={draft.reason_id}
             onChange={(e) => {
               const raw = e.target.value
-              if (raw === '__new__') {
-                setReasonModalOpen(true)
-                return
-              }
+            if (raw === '__new__') {
+              setReasonModalOpen(true)
+              return
+            }
               if (raw === '__manage__') {
                 setManageReasonsOpen(true)
                 return
@@ -175,9 +177,9 @@ export function AbsencesPage() {
               setDraft({ ...draft, reason_id: Number(raw) })
             }}
           >
-            <option value="">Bitte wählen</option>
-            <option value="__new__">+ Neuer Grund…</option>
-            <option value="__manage__">⚙ Gründe verwalten…</option>
+            <option value="">{t('absences.selectPlaceholder')}</option>
+            <option value="__new__">{t('absences.reasonNew')}</option>
+            <option value="__manage__">{t('absences.reasonManage')}</option>
             {reasons.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.name}
@@ -186,13 +188,13 @@ export function AbsencesPage() {
           </select>
         </label>
         <button disabled={loading || !draft.reason_id} onClick={() => create()}>
-          Anlegen
+          {t('absences.create')}
         </button>
-        <p className="muted small">Hinweis: Wenn bereits Zeitbuchungen im Zeitraum existieren, wird das Anlegen abgelehnt.</p>
+        <p className="muted small">{t('absences.createHint')}</p>
       </section>
 
       <section className="card">
-        <h2>Liste</h2>
+        <h2>{t('absences.list')}</h2>
         <div className="table">
           <div
             className="thead"
@@ -213,13 +215,13 @@ export function AbsencesPage() {
               <div>{a.end_date}</div>
               <div>{a.reason.name}</div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                <button className="secondary" disabled={loading} onClick={() => remove(a.id)}>
-                  Löschen
-                </button>
+                  <button className="secondary" disabled={loading} onClick={() => remove(a.id)}>
+                    {t('common.delete')}
+                  </button>
               </div>
             </div>
           ))}
-          {absences.length === 0 ? <div className="muted">Keine Abwesenheiten.</div> : null}
+          {absences.length === 0 ? <div className="muted">{t('absences.none')}</div> : null}
         </div>
       </section>
 
@@ -233,18 +235,18 @@ export function AbsencesPage() {
         >
           <div className="modal" onMouseDown={(e) => e.stopPropagation()}>
             <div className="row">
-              <strong>Neuer Abwesenheitsgrund</strong>
+              <strong>{t('absences.reasonModalTitle')}</strong>
               <button className="secondary" type="button" disabled={reasonSaving} onClick={() => setReasonModalOpen(false)}>
-                Schließen
+                {t('common.close')}
               </button>
             </div>
 
             <label>
-              Name
+              {t('absences.reasonName')}
               <input
                 value={newReasonName}
                 autoFocus
-                placeholder="z.B. Urlaub"
+                placeholder={t('absences.reasonCreateExample')}
                 onChange={(e) => setNewReasonName(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -258,7 +260,7 @@ export function AbsencesPage() {
             <div className="row" style={{ marginTop: 10 }}>
               <div />
               <button type="button" disabled={reasonSaving || !newReasonName.trim()} onClick={() => createReason(newReasonName)}>
-                {reasonSaving ? '...' : 'Anlegen'}
+                {reasonSaving ? t('common.loading') : t('absences.create')}
               </button>
             </div>
           </div>
@@ -275,9 +277,9 @@ export function AbsencesPage() {
         >
           <div className="modal" onMouseDown={(e) => e.stopPropagation()}>
             <div className="row">
-              <strong>Abwesenheitsgründe verwalten</strong>
+              <strong>{t('absences.manageReasonsTitle')}</strong>
               <button className="secondary" type="button" disabled={manageBusyId !== null} onClick={() => setManageReasonsOpen(false)}>
-                Schließen
+                {t('common.close')}
               </button>
             </div>
 
@@ -296,16 +298,16 @@ export function AbsencesPage() {
                   />
                   <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                     <button className="secondary" type="button" disabled={manageBusyId === r.id} onClick={() => deleteReason(r.id)}>
-                      Löschen
+                      {t('common.delete')}
                     </button>
                   </div>
                 </div>
               ))}
-              {reasons.length === 0 ? <div className="muted">Keine Gründe.</div> : null}
+              {reasons.length === 0 ? <div className="muted">{t('absences.noReasons')}</div> : null}
             </div>
 
             <p className="muted small" style={{ margin: 0 }}>
-              Hinweis: Löschen schlägt fehl, wenn der Grund noch von Abwesenheiten verwendet wird.
+              {t('absences.reasonDeleteHint')}
             </p>
           </div>
         </div>

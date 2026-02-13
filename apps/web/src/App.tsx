@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { RequireAuth } from './components/RequireAuth'
 import { useAuth } from './lib/auth'
+import { useI18n } from './lib/i18n'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -12,9 +13,10 @@ import { AbsencesPage } from './pages/AbsencesPage'
 
 export default function App() {
   const auth = useAuth()
+  const { t } = useI18n()
 
   if (auth.state.status === 'loading') {
-    return <div className="page">...</div>
+    return <div className="page">{t('common.loading')}</div>
   }
 
   return (

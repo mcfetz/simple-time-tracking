@@ -4,6 +4,7 @@ import { deleteDayNote, getDayNote, upsertDayNote } from '../lib/notes'
 import { useAuth } from '../lib/auth'
 import type { CreateClockEventRequest, DailyStatusResponse, MonthReport } from '../lib/types'
 import { enqueueClockEvent, flushClockEventQueue, subscribeQueueCount } from '../lib/offlineQueue'
+import { useI18n } from '../lib/i18n'
 
 
 function formatMinutes(min: number): string {
@@ -74,6 +75,7 @@ function geoSupported(): boolean {
 
 export function DashboardPage() {
   const auth = useAuth()
+  const { t } = useI18n()
   const [status, setStatus] = useState<DailyStatusResponse | null>(null)
   const [month, setMonth] = useState<MonthReport | null>(null)
   const [loading, setLoading] = useState(false)
@@ -102,7 +104,7 @@ export function DashboardPage() {
   }
 
   useEffect(() => {
-    loadStatus().catch((e) => setError((e as { message?: string })?.message || 'Fehler'))
+    loadStatus().catch((e) => setError((e as { message?: string })?.message || t('errors.generic')))
     loadMonth().catch(() => undefined)
   }, [])
 
@@ -147,7 +149,7 @@ export function DashboardPage() {
 
       await loadMonth()
     } catch (e) {
-      setError((e as { message?: string })?.message || 'Fehler')
+      setError((e as { message?: string })?.message || t('errors.generic'))
     } finally {
       setNoteSaving(false)
     }
@@ -182,7 +184,7 @@ export function DashboardPage() {
         setNoteValue(content)
       })
       .catch((e) => {
-        setError((e as { message?: string })?.message || 'Fehler')
+        setError((e as { message?: string })?.message || t('errors.generic'))
         lastPersistedNote.current = ''
         setNoteValue('')
       })
@@ -200,12 +202,12 @@ export function DashboardPage() {
       await loadMonth()
     } catch (e) {
       const statusCode = (e as { status?: number })?.status
-      if (typeof statusCode === 'number') {
-        setError((e as { message?: string })?.message || 'Fehler')
-      } else {
-        await enqueueClockEvent(event)
-        setError('Offline: Aktion wurde in Queue gespeichert')
-      }
+        if (typeof statusCode === 'number') {
+          setError((e as { message?: string })?.message || t('errors.generic'))
+        } else {
+          await enqueueClockEvent(event)
+          setError(t('errors.offlineQueued'))
+        }
     } finally {
       setLoading(false)
     }
@@ -302,24 +304,26 @@ export function DashboardPage() {
 
   return (
     <div className="page">
-      {!navigator.onLine ? <div className="warn">Offline – Aktionen werden zwischengespeichert.</div> : null}
+      {!navigator.onLine ? <div className="warn">{t('dashboard.offlineBanner')}</div> : null}
       {queued > 0 ? (
         <div className="warn">
           <div className="row">
-            <span>Queue: {queued}</span>
+            <span>
+              {t('dashboard.queue')}: {queued}
+            </span>
             <button
               className="secondary"
               disabled={!navigator.onLine}
               onClick={() => flushClockEventQueue().then(() => loadStatus())}
             >
-              Sync
+              {t('dashboard.sync')}
             </button>
           </div>
         </div>
       ) : null}
       <section className="card">
         <div className="row">
-          <h2 style={{ margin: 0 }}>Heute</h2>
+          <h2 style={{ margin: 0 }}>{t('dashboard.today')}</h2>
         </div>
 
         {error ? <div className="error">{error}</div> : null}
@@ -329,7 +333,7 @@ export function DashboardPage() {
           <>
             {status.absence ? (
               <div className="warn">
-                Ganztägige Abwesenheit: {status.absence.reason.name} ({status.absence.start_date} – {status.absence.end_date})
+                {t('dashboard.absenceFullDay')}: {status.absence.reason.name} ({status.absence.start_date} – {status.absence.end_date})
               </div>
             ) : null}
 
@@ -351,31 +355,31 @@ export function DashboardPage() {
             </div>
 
             <div className="dashRow2">
-              <div className="dashMetric">
-                <div className="muted small">Gearbeitet</div>
+                <div className="dashMetric">
+                <div className="muted small">{t('dashboard.worked')}</div>
                 <strong>{formatMinutes(status.worked_minutes)}</strong>
               </div>
               <div className="dashMetric">
-                <div className="muted small">Noch</div>
+                <div className="muted small">{t('dashboard.remaining')}</div>
                 <strong>{formatMinutes(status.remaining_work_minutes)}</strong>
               </div>
             </div>
 
             <div className="dashRow2">
               <div className="dashMetric">
-                <div className="muted small">Pause</div>
+                <div className="muted small">{t('dashboard.break')}</div>
                 <strong>{formatMinutes(status.break_minutes)}</strong>
               </div>
               <div className="dashMetric">
-                <div className="muted small">Pause noch</div>
+                <div className="muted small">{t('dashboard.breakRemaining')}</div>
                 <strong>{formatMinutes(status.remaining_break_minutes)}</strong>
               </div>
             </div>
 
             {(status.max_daily_work_exceeded || status.rest_period_violation) && (
               <div className="warn">
-                {status.max_daily_work_exceeded ? <div>Warnung: &gt; 10h gearbeitet</div> : null}
-                {status.rest_period_violation ? <div>Warnung: Ruhezeit &lt; 11h</div> : null}
+                {status.max_daily_work_exceeded ? <div>{t('dashboard.warningOver10h')}</div> : null}
+                {status.rest_period_violation ? <div>{t('dashboard.warningRest11h')}</div> : null}
               </div>
             )}
           </>
@@ -383,7 +387,7 @@ export function DashboardPage() {
       </section>
 
       <section className="card">
-        <h2 style={{ margin: 0 }}>Aktionen</h2>
+        <h2 style={{ margin: 0 }}>{t('dashboard.actions')}</h2>
 
         {status && canCome ? (
           <div className="controls">
@@ -394,7 +398,7 @@ export function DashboardPage() {
                 disabled={!canGeo}
                 onChange={(e) => setUseGeo(e.target.checked)}
               />
-              Geolocation
+              {t('dashboard.geolocation')}
             </label>
           </div>
         ) : null}
@@ -405,16 +409,16 @@ export function DashboardPage() {
           {canCome ? (
             <>
               <button disabled={loading} onClick={() => come('OFFICE')}>
-                Kommen Büro
+                {t('dashboard.comeOffice')}
               </button>
               <button disabled={loading} onClick={() => come('HOME')}>
-                Kommen Home Office
+                {t('dashboard.comeHome')}
               </button>
             </>
           ) : null}
           {canGo ? (
             <button disabled={loading} onClick={() => createEvent({ type: 'GO', client_event_id: crypto.randomUUID() })}>
-              Gehen
+              {t('dashboard.go')}
             </button>
           ) : null}
           {canBreakStart ? (
@@ -422,7 +426,7 @@ export function DashboardPage() {
               disabled={loading}
               onClick={() => createEvent({ type: 'BREAK_START', client_event_id: crypto.randomUUID() })}
             >
-              Pause Beginn
+              {t('dashboard.breakStart')}
             </button>
           ) : null}
           {canBreakEnd ? (
@@ -430,16 +434,16 @@ export function DashboardPage() {
               disabled={loading}
               onClick={() => createEvent({ type: 'BREAK_END', client_event_id: crypto.randomUUID() })}
             >
-              Pause Ende
+              {t('dashboard.breakEnd')}
             </button>
           ) : null}
         </div>
 
         <label>
-          Notiz (heute)
+          {t('common.note')} ({t('dashboard.today')})
           <textarea
             rows={5}
-            placeholder="Notiz (mehrzeilig)"
+            placeholder={t('dashboard.notePlaceholder')}
             value={noteValue}
             disabled={!status}
             onChange={(e) => {
@@ -454,16 +458,16 @@ export function DashboardPage() {
             style={{ width: '100%' }}
           />
         </label>
-        <div className="muted small">{noteSaving ? 'Speichert…' : 'Speichert automatisch'}</div>
+        <div className="muted small">{noteSaving ? t('common.loading') : t('common.save')}</div>
       </section>
 
       <section className="card">
-        <h2 style={{ margin: 0 }}>Monat</h2>
+        <h2 style={{ margin: 0 }}>{t('dashboard.month')}</h2>
         {!month || !status ? <div className="muted">...</div> : null}
 
         {overtime ? (
           <div className="row">
-            <span className="muted">Stundenkonto (bis heute)</span>
+            <span className="muted">{t('dashboard.overtimeBalanceToDate')}</span>
             <strong className={overtime.balanceMinutes >= 0 ? 'okText' : 'errorText'}>
               {overtime.balanceMinutes >= 0 ? '+' : '-'}
               {formatMinutes(Math.abs(overtime.balanceMinutes))}
@@ -479,12 +483,12 @@ export function DashboardPage() {
                 className={`heat${d.hasNote ? ' heatNote' : ''}`}
                 style={{ background: d.color }}
                 title={
-                  d.isBeforeStart
-                    ? `${d.date_local}: vor Startdatum Stundenkonto`
+                    d.isBeforeStart
+                    ? `${d.date_local}: ${t('dashboard.heatmap.beforeOvertimeStart')}`
                     : d.isAbsence
-                      ? `${d.date_local}: Abwesenheit (${d.absenceReason ?? '—'})`
+                      ? `${d.date_local}: ${t('dashboard.heatmap.absence')} (${d.absenceReason ?? '—'})`
                       : `${d.date_local}: ${formatMinutes(d.worked_minutes)} / ${formatMinutes(d.expected_minutes)}${
-                          d.hasNote ? ' (Notiz)' : ''
+                          d.hasNote ? ` (${t('dashboard.heatmap.note')})` : ''
                         }`
                 }
               />
@@ -495,7 +499,7 @@ export function DashboardPage() {
 
       <div className="logoutRow">
         <button className="linkButton" type="button" onClick={() => auth.logout()}>
-          Logout
+          {t('dashboard.logout')}
         </button>
       </div>
     </div>

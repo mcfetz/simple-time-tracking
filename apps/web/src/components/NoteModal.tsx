@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useI18n } from '../lib/i18n'
 
 type Props = {
   dateLocal: string
@@ -19,6 +20,7 @@ export function NoteModal({
   onSave,
   onDelete,
 }: Props) {
+  const { t } = useI18n()
   const [value, setValue] = useState(initialContent)
 
   useEffect(() => {
@@ -31,9 +33,11 @@ export function NoteModal({
     <div className="modalOverlay" onMouseDown={onClose}>
       <div className="modal" onMouseDown={(e) => e.stopPropagation()}>
         <div className="row">
-          <strong>Notiz: {dateLocal}</strong>
+          <strong>
+            {t('common.note')}: {dateLocal}
+          </strong>
           <button type="button" className="secondary" onClick={onClose}>
-            Schließen
+            {t('common.close')}
           </button>
         </div>
 
@@ -41,16 +45,16 @@ export function NoteModal({
           rows={8}
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="Notiz (mehrzeilig)"
+          placeholder={t('dashboard.notePlaceholder')}
           style={{ width: '100%' }}
         />
 
         <div className="row" style={{ marginTop: 10 }}>
           <button type="button" className="secondary" disabled={saving} onClick={() => onDelete()}>
-            Löschen
+            {t('common.delete')}
           </button>
           <button type="button" disabled={saving} onClick={() => onSave(value)}>
-            {saving ? '...' : 'Speichern'}
+            {saving ? t('common.loading') : t('common.save')}
           </button>
         </div>
       </div>

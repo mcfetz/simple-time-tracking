@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth'
 import { deleteDayNote, getDayNote, upsertDayNote } from '../lib/notes'
 import type { ClockEvent } from '../lib/types'
 import { NoteModal } from '../components/NoteModal'
+import { useI18n } from '../lib/i18n'
 
 type EditState = {
   id: number
@@ -35,6 +36,7 @@ function toLocal(tsUtc: string, tz: string): string {
 
 export function HistoryPage() {
   const auth = useAuth()
+  const { t } = useI18n()
   const tz = auth.state.status === 'authenticated' ? auth.state.user.timezone : 'UTC'
 
   const [events, setEvents] = useState<ClockEvent[]>([])
@@ -69,18 +71,18 @@ export function HistoryPage() {
   }
 
   useEffect(() => {
-    load().catch((e) => setError((e as { message?: string })?.message || 'Fehler'))
+    load().catch((e) => setError((e as { message?: string })?.message || t('errors.generic')))
   }, [])
 
   async function onDelete(id: number) {
-    if (!confirm('Eintrag wirklich löschen?')) return
+    if (!confirm(t('confirm.deleteEntry'))) return
     setLoading(true)
     setError(null)
     try {
       await apiFetch<void>(`/clock/events/${id}`, { method: 'DELETE' })
       await load()
     } catch (e) {
-      setError((e as { message?: string })?.message || 'Fehler')
+      setError((e as { message?: string })?.message || t('errors.generic'))
     } finally {
       setLoading(false)
     }
@@ -110,7 +112,7 @@ export function HistoryPage() {
       setEdit(null)
       await load()
     } catch (e) {
-      setError((e as { message?: string })?.message || 'Fehler')
+      setError((e as { message?: string })?.message || t('errors.generic'))
     } finally {
       setLoading(false)
     }
@@ -125,7 +127,7 @@ export function HistoryPage() {
       const n = await getDayNote(dateLocal)
       setNoteInitial(n?.content ?? '')
     } catch (e) {
-      setError((e as { message?: string })?.message || 'Fehler')
+      setError((e as { message?: string })?.message || t('errors.generic'))
       setNoteInitial('')
     } finally {
       setNoteSaving(false)
@@ -140,7 +142,7 @@ export function HistoryPage() {
       await upsertDayNote(noteDateLocal, content)
       setNoteOpen(false)
     } catch (e) {
-      setError((e as { message?: string })?.message || 'Fehler')
+      setError((e as { message?: string })?.message || t('errors.generic'))
     } finally {
       setNoteSaving(false)
     }
@@ -154,7 +156,7 @@ export function HistoryPage() {
       await deleteDayNote(noteDateLocal)
       setNoteOpen(false)
     } catch (e) {
-      setError((e as { message?: string })?.message || 'Fehler')
+      setError((e as { message?: string })?.message || t('errors.generic'))
     } finally {
       setNoteSaving(false)
     }
@@ -162,11 +164,13 @@ export function HistoryPage() {
 
   return (
     <div className="page">
-      <h1 style={{ margin: 0 }}>History</h1>
+      <h1 style={{ margin: 0 }}>{t('history.title')}</h1>
       <div className="row">
-        <span className="muted">{events.length} Einträge</span>
+        <span className="muted">
+          {events.length} {t('history.entries')}
+        </span>
         <button className="secondary" disabled={loading} onClick={() => load()}>
-          Aktualisieren
+          {t('common.refresh')}
         </button>
       </div>
 
@@ -175,18 +179,18 @@ export function HistoryPage() {
       {edit ? (
         <form className="card" onSubmit={submitEdit}>
           <div className="row">
-            <strong>Eintrag bearbeiten</strong>
+            <strong>{t('history.editEntry')}</strong>
             <button className="secondary" type="button" onClick={() => setEdit(null)}>
-              Abbrechen
+              {t('common.cancel')}
             </button>
           </div>
 
           <label>
-            Zeit (UTC)
+            {t('history.timeUtc')}
             <input value={edit.ts_utc} onChange={(e) => setEdit({ ...edit, ts_utc: e.target.value })} />
           </label>
           <label>
-            Typ
+            {t('history.type')}
             <select value={edit.type} onChange={(e) => setEdit({ ...edit, type: e.target.value as EditState['type'] })}>
               <option value="COME">COME</option>
               <option value="GO">GO</option>
@@ -196,7 +200,7 @@ export function HistoryPage() {
           </label>
           {edit.type === 'COME' ? (
             <label>
-              Location
+              {t('history.location')}
               <select
                 value={edit.location ?? 'OFFICE'}
                 onChange={(e) => setEdit({ ...edit, location: e.target.value as EditState['location'] })}
@@ -208,7 +212,7 @@ export function HistoryPage() {
           ) : null}
 
           <button type="submit" disabled={loading}>
-            {loading ? '...' : 'Speichern'}
+            {loading ? t('common.loading') : t('common.save')}
           </button>
         </form>
       ) : null}
@@ -218,15 +222,15 @@ export function HistoryPage() {
           <div className="row">
             <strong>{g.date_local}</strong>
             <button className="secondary" type="button" disabled={loading} onClick={() => openNote(g.date_local)}>
-              Notiz
+              {t('common.note')}
             </button>
           </div>
 
           <div className="thead" style={{ gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr)' }}>
-            <div>Zeit</div>
-            <div>Typ</div>
-            <div>Location</div>
-            <div>Aktionen</div>
+            <div>{t('history.timeUtc')}</div>
+            <div>{t('history.type')}</div>
+            <div>{t('history.location')}</div>
+            <div>{t('history.actions')}</div>
           </div>
           {g.events.map((e) => (
             <div
@@ -239,10 +243,10 @@ export function HistoryPage() {
               <div className="muted">{e.location ?? '-'}</div>
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 <button className="secondary" type="button" disabled={loading} onClick={() => startEdit(e)}>
-                  Bearbeiten
+                  {t('history.edit')}
                 </button>
                 <button type="button" disabled={loading} onClick={() => onDelete(e.id)}>
-                  Löschen
+                  {t('history.delete')}
                 </button>
               </div>
             </div>

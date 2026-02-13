@@ -5,6 +5,7 @@ import { useI18n, type Lang } from '../lib/i18n'
 
 export function SettingsPage() {
   const i18n = useI18n()
+  const { t } = i18n
   const [settings, setSettings] = useState<UserSettings | null>(null)
   const [dailyTargetMinutes, setDailyTargetMinutes] = useState<number>(468)
   const [homeOfficeRatio, setHomeOfficeRatio] = useState<number>(0.4)
@@ -23,7 +24,7 @@ export function SettingsPage() {
   }
 
   useEffect(() => {
-    load().catch((e) => setError((e as { message?: string })?.message || 'Fehler'))
+    load().catch((e) => setError((e as { message?: string })?.message || t('errors.generic')))
   }, [])
 
   async function onSubmit(e: FormEvent) {
@@ -43,7 +44,7 @@ export function SettingsPage() {
       setSettings(data)
       setSaved(true)
     } catch (err) {
-      setError((err as { message?: string })?.message || 'Fehler')
+      setError((err as { message?: string })?.message || t('errors.generic'))
     } finally {
       setLoading(false)
     }
@@ -51,7 +52,7 @@ export function SettingsPage() {
 
   return (
     <div className="page">
-      <h1 style={{ margin: 0 }}>Settings</h1>
+      <h1 style={{ margin: 0 }}>{t('settings.title')}</h1>
 
       {error ? <div className="error">{error}</div> : null}
       {!settings ? <div className="muted">...</div> : null}
@@ -59,9 +60,9 @@ export function SettingsPage() {
       {settings ? (
         <>
           <section className="card">
-            <h2>Language</h2>
+            <h2>{t('settings.language')}</h2>
             <label>
-              App language
+              {t('settings.appLanguage')}
               <select value={i18n.lang} onChange={(e) => i18n.setLang(e.target.value as Lang)}>
                 <option value="en">English</option>
                 <option value="de">Deutsch</option>
@@ -71,7 +72,7 @@ export function SettingsPage() {
 
           <form className="card" onSubmit={onSubmit}>
             <label>
-              Sollarbeitszeit pro Tag (Minuten)
+              {t('settings.dailyTarget')}
               <input
                 type="number"
                 min={0}
@@ -82,7 +83,7 @@ export function SettingsPage() {
             </label>
 
             <label>
-              Home-Office Ziel (0..1)
+              {t('settings.homeOfficeTarget')}
               <input
                 type="number"
                 min={0}
@@ -94,7 +95,7 @@ export function SettingsPage() {
             </label>
 
             <label>
-              Startdatum Stundenkonto (YYYY-MM-DD)
+              {t('settings.overtimeStart')} (YYYY-MM-DD)
               <input
                 type="date"
                 value={overtimeStartDate}
@@ -103,10 +104,10 @@ export function SettingsPage() {
             </label>
 
             <button type="submit" disabled={loading}>
-              {loading ? '...' : 'Speichern'}
+              {loading ? t('common.loading') : t('common.save')}
             </button>
 
-            {saved ? <div className="ok">Gespeichert.</div> : null}
+            {saved ? <div className="ok">{t('settings.saved')}</div> : null}
           </form>
 
         </>
