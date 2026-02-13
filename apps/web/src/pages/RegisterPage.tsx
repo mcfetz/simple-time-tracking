@@ -31,7 +31,7 @@ export function RegisterPage() {
       <div className="card" style={{ maxWidth: 440, width: '100%', justifySelf: 'center' }}>
         <div style={{ display: 'grid', gap: 6 }}>
           <div style={{ display: 'grid', gap: 2, justifyItems: 'center', textAlign: 'center' }}>
-            <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: 0.3 }}>STT</div>
+            <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: 0.3 }}>⏱  STT</div>
             <div className="muted" style={{ fontSize: 14 }}>
               Simple Time Tracking
             </div>
