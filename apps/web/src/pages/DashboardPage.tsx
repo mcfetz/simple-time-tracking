@@ -320,7 +320,6 @@ export function DashboardPage() {
       <section className="card">
         <div className="row">
           <h2 style={{ margin: 0 }}>Heute</h2>
-          <span className="muted small">auto</span>
         </div>
 
         {error ? <div className="error">{error}</div> : null}
@@ -335,7 +334,17 @@ export function DashboardPage() {
             ) : null}
 
             <div className="dashStatusRow">
-              <div className="dashMetric">
+              <div
+                className="dashMetric"
+                style={{
+                  background:
+                    status.state === 'WORKING'
+                      ? 'rgba(34, 197, 94, 0.12)'
+                      : status.state === 'BREAK'
+                        ? 'rgba(250, 204, 21, 0.16)'
+                        : undefined,
+                }}
+              >
                 <div className="muted small">Status</div>
                 <strong>{status.state}</strong>
               </div>
