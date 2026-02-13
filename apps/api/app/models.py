@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, UTC
 
 from sqlalchemy import Date, DateTime, Float, ForeignKey, Index, Integer, String
 from sqlalchemy import Enum as SAEnum
@@ -10,13 +10,13 @@ from app.db import Base
 
 
 def utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def utc_datetime(value: datetime) -> datetime:
     if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
-    return value.astimezone(timezone.utc)
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
 
 
 class User(Base):
@@ -30,12 +30,12 @@ class User(Base):
         DateTime(timezone=True), default=utc_now
     )
 
-    settings: Mapped["UserSettings"] = relationship(
+    settings: Mapped[UserSettings] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
         uselist=False,
     )
-    sessions: Mapped[list["AuthSession"]] = relationship(
+    sessions: Mapped[list[AuthSession]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
     )
@@ -198,6 +198,8 @@ class DayNote(Base):
     )
     date_local: Mapped[date] = mapped_column(Date, index=True)
     content: Mapped[str] = mapped_column(String(4000), default="")
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now
+    )
 
     user: Mapped[User] = relationship()

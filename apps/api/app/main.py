@@ -15,7 +15,7 @@ from app.routers.notes import router as notes_router
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="Time Tracking API")
+    app = FastAPI(title="STT - Simple Time Tracking API")
 
     app.add_middleware(
         CORSMiddleware,

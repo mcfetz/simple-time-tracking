@@ -1,6 +1,9 @@
+# ruff: noqa: B008
+
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import and_, desc, select
@@ -21,28 +24,26 @@ from app.time_calc import (
     seconds_between,
 )
 
-
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
 def _day_bounds_utc(now_utc: datetime, tz: str) -> tuple[datetime, datetime, str]:
-    from zoneinfo import ZoneInfo
 
     zone = ZoneInfo(tz)
     now_local = now_utc.astimezone(zone)
     day_start_local = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
     next_day_local = day_start_local + timedelta(days=1)
 
-    start_utc = day_start_local.astimezone(timezone.utc)
-    end_utc = next_day_local.astimezone(timezone.utc)
+    start_utc = day_start_local.astimezone(UTC)
+    end_utc = next_day_local.astimezone(UTC)
     return start_utc, end_utc, day_start_local.date().isoformat()
 
 
 @router.get("/today", response_model=DailyStatusResponse)
-def today(
+def today(  # noqa: PLR0912, PLR0915
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
-    now_utc = datetime.now(timezone.utc)
+    now_utc = datetime.now(UTC)
     tz = current_user.timezone
     start_utc, end_utc, date_local = _day_bounds_utc(now_utc, tz)
     day_local = date.fromisoformat(date_local)

@@ -1,6 +1,6 @@
-from __future__ import annotations
+# ruff: noqa: B008
 
-from typing import Literal, cast
+from __future__ import annotations
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 from sqlalchemy import select
@@ -32,7 +32,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 def _set_refresh_cookie(*, response: Response, refresh_token: str) -> None:
-    samesite = cast(Literal["lax", "strict", "none"], settings.cookie_samesite)
+    samesite = settings.cookie_samesite
     response.set_cookie(
         key="tt_refresh",
         value=refresh_token,
@@ -150,7 +150,6 @@ def logout(
             db.commit()
 
     response.delete_cookie(key="tt_refresh", path="/auth")
-    return None
 
 
 @router.get("/me", response_model=UserPublic)

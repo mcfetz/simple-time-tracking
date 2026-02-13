@@ -1,3 +1,5 @@
+# ruff: noqa: B008
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends

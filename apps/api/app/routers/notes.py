@@ -1,3 +1,5 @@
+# ruff: noqa: B008
+
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Response
