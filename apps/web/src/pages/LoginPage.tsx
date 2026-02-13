@@ -40,7 +40,12 @@ export function LoginPage() {
     <div className="page" style={{ paddingTop: 24 }}>
       <div className="card" style={{ maxWidth: 440, width: '100%', justifySelf: 'center' }}>
         <div style={{ display: 'grid', gap: 6 }}>
-          <h1 style={{ margin: 0 }}>Time Tracking</h1>
+          <div style={{ display: 'grid', gap: 2 }}>
+            <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: 0.3 }}>STT</div>
+            <div className="muted" style={{ fontSize: 14 }}>
+              Simple Time Tracking
+            </div>
+          </div>
           <p className="muted" style={{ margin: 0 }}>
             Bitte anmelden.
           </p>
