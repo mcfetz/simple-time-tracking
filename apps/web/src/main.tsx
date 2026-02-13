@@ -8,6 +8,8 @@ import { installAutoFlush } from './lib/offlineQueue'
 import { I18nProvider } from './lib/i18n'
 import { loadAccessTokenFromStorage } from './lib/api'
 
+loadAccessTokenFromStorage()
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <I18nProvider>
@@ -19,7 +21,5 @@ createRoot(document.getElementById('root')!).render(
     </I18nProvider>
   </StrictMode>,
 )
-
-loadAccessTokenFromStorage()
 
 installAutoFlush()

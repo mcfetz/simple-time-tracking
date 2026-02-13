@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { apiFetch, resetAuthExpiredSignal, setAccessToken } from './api'
+import { apiFetch, getAccessToken, resetAuthExpiredSignal, setAccessToken } from './api'
 import type { Lang } from './i18n'
 import type { AuthResponse } from './types'
 
@@ -37,6 +37,18 @@ export function AuthProvider(props: { children: React.ReactNode }) {
 
   async function refresh() {
     try {
+      const existing = getAccessToken()
+      if (existing) {
+        try {
+          const me = await apiFetch<AuthResponse['user']>('/auth/me', { method: 'GET', retryOn401: false })
+          resetAuthExpiredSignal()
+          localStorage.setItem(USER_CACHE_KEY, JSON.stringify(me))
+          setState({ status: 'authenticated', user: me })
+          return
+        } catch {
+        }
+      }
+
       const data = await apiFetch<AuthResponse>('/auth/refresh', { method: 'POST', retryOn401: false })
       resetAuthExpiredSignal()
       setAccessToken(data.token.access_token)
