@@ -210,14 +210,51 @@ def list_events(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     limit: int = 50,
+    start_local: str | None = None,
+    end_local_exclusive: str | None = None,
 ):
-    limit = max(1, min(limit, 200))
-    stmt = (
-        select(ClockEvent)
-        .where(ClockEvent.user_id == current_user.id)
-        .order_by(desc(ClockEvent.ts_utc))
-        .limit(limit)
-    )
+    from datetime import date, datetime, time
+    from zoneinfo import ZoneInfo
+
+    stmt = select(ClockEvent).where(ClockEvent.user_id == current_user.id)
+
+    if start_local is not None or end_local_exclusive is not None:
+        if start_local is None or end_local_exclusive is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="start_local and end_local_exclusive must be provided together",
+            )
+
+        try:
+            start_d = date.fromisoformat(start_local)
+            end_d = date.fromisoformat(end_local_exclusive)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid date format; expected YYYY-MM-DD",
+            )
+
+        if end_d <= start_d:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="end_local_exclusive must be after start_local",
+            )
+
+        zone = ZoneInfo(current_user.timezone)
+        start_dt_local = datetime.combine(start_d, time.min).replace(tzinfo=zone)
+        end_dt_local = datetime.combine(end_d, time.min).replace(tzinfo=zone)
+        start_utc = start_dt_local.astimezone(timezone.utc)
+        end_utc = end_dt_local.astimezone(timezone.utc)
+
+        stmt = (
+            stmt.where(ClockEvent.ts_utc >= start_utc)
+            .where(ClockEvent.ts_utc < end_utc)
+            .order_by(ClockEvent.ts_utc.asc())
+        )
+    else:
+        limit = max(1, min(limit, 200))
+        stmt = stmt.order_by(desc(ClockEvent.ts_utc)).limit(limit)
+
     events = list(db.scalars(stmt).all())
 
     out: list[ClockEventResponse] = []

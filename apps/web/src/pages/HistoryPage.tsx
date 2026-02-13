@@ -7,6 +7,7 @@ import type { ClockEvent } from '../lib/types'
 import { NoteModal } from '../components/NoteModal'
 import { useI18n } from '../lib/i18n'
 import { formatDateLocal, formatTime, localIsoDateFromUtc } from '../lib/format'
+import { useSearchParams } from 'react-router-dom'
 
 type EditState = {
   id: number
@@ -28,6 +29,9 @@ export function HistoryPage() {
   const auth = useAuth()
   const { t, lang } = useI18n()
   const tz = auth.state.status === 'authenticated' ? auth.state.user.timezone : 'UTC'
+
+  const [search, setSearch] = useSearchParams()
+  const startParam = search.get('start') || ''
 
   const [events, setEvents] = useState<ClockEvent[]>([])
   const [loading, setLoading] = useState(false)
@@ -56,13 +60,45 @@ export function HistoryPage() {
 
   async function load() {
     setError(null)
+    if (startParam) {
+      const start = startParam
+      const end = shiftIsoDate(start, 7)
+      const data = await apiFetch<ClockEvent[]>(
+        `/clock/events?start_local=${encodeURIComponent(start)}&end_local_exclusive=${encodeURIComponent(end)}`,
+      )
+      setEvents(data)
+      return
+    }
+
     const data = await apiFetch<ClockEvent[]>('/clock/events?limit=200')
     setEvents(data)
   }
 
+  function setStartParam(start: string) {
+    const next = new URLSearchParams(search)
+    if (start) next.set('start', start)
+    else next.delete('start')
+    setSearch(next, { replace: true })
+  }
+
+  function shiftIsoDate(iso: string, days: number): string {
+    const [y, m, dd] = iso.split('-').map((x) => Number(x))
+    const d = new Date(Date.UTC(y, m - 1, dd))
+    d.setUTCDate(d.getUTCDate() + days)
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+  }
+
+  useEffect(() => {
+    if (startParam) return
+    const d = new Date()
+    d.setDate(d.getDate() - 6)
+    const start = d.toISOString().slice(0, 10)
+    setStartParam(start)
+  }, [])
+
   useEffect(() => {
     load().catch((e) => setError((e as { message?: string })?.message || t('errors.generic')))
-  }, [])
+  }, [startParam])
 
   async function onDelete(id: number) {
     if (!confirm(t('confirm.deleteEntry'))) return
@@ -159,9 +195,15 @@ export function HistoryPage() {
         <span className="muted">
           {events.length} {t('history.entries')}
         </span>
-        <button className="secondary" disabled={loading} onClick={() => load()}>
-          {t('common.refresh')}
-        </button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}>
+          <button className="secondary" type="button" disabled={loading || !startParam} onClick={() => setStartParam(shiftIsoDate(startParam, -7))}>
+            ◀
+          </button>
+          <input type="date" value={startParam} onChange={(e) => setStartParam(e.target.value)} />
+          <button className="secondary" type="button" disabled={loading || !startParam} onClick={() => setStartParam(shiftIsoDate(startParam, 7))}>
+            ▶
+          </button>
+        </div>
       </div>
 
       {error ? <div className="error">{error}</div> : null}
