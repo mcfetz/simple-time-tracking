@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { apiFetch, setAccessToken } from './api'
+import { apiFetch, resetAuthExpiredSignal, setAccessToken } from './api'
 import type { Lang } from './i18n'
 import type { AuthResponse } from './types'
 
@@ -38,6 +38,7 @@ export function AuthProvider(props: { children: React.ReactNode }) {
   async function refresh() {
     try {
       const data = await apiFetch<AuthResponse>('/auth/refresh', { method: 'POST', retryOn401: false })
+      resetAuthExpiredSignal()
       setAccessToken(data.token.access_token)
       localStorage.setItem(USER_CACHE_KEY, JSON.stringify(data.user))
       setState({ status: 'authenticated', user: data.user })
@@ -64,6 +65,7 @@ export function AuthProvider(props: { children: React.ReactNode }) {
 
   async function login(email: string, password: string) {
     const data = await apiFetch<AuthResponse>('/auth/login', { method: 'POST', body: { email, password }, retryOn401: false })
+    resetAuthExpiredSignal()
     setAccessToken(data.token.access_token)
     localStorage.setItem(USER_CACHE_KEY, JSON.stringify(data.user))
     setState({ status: 'authenticated', user: data.user })
@@ -71,6 +73,7 @@ export function AuthProvider(props: { children: React.ReactNode }) {
 
   async function register(email: string, password: string) {
     const data = await apiFetch<AuthResponse>('/auth/register', { method: 'POST', body: { email, password }, retryOn401: false })
+    resetAuthExpiredSignal()
     setAccessToken(data.token.access_token)
     localStorage.setItem(USER_CACHE_KEY, JSON.stringify(data.user))
     setState({ status: 'authenticated', user: data.user })

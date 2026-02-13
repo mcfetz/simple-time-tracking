@@ -6,6 +6,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './lib/auth'
 import { installAutoFlush } from './lib/offlineQueue'
 import { I18nProvider } from './lib/i18n'
+import { loadAccessTokenFromStorage } from './lib/api'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -18,5 +19,7 @@ createRoot(document.getElementById('root')!).render(
     </I18nProvider>
   </StrictMode>,
 )
+
+loadAccessTokenFromStorage()
 
 installAutoFlush()

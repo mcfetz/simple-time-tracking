@@ -14,6 +14,8 @@ let accessToken: string | null = null
 let refreshPromise: Promise<boolean> | null = null
 let authExpiredSignaled = false
 
+const ACCESS_TOKEN_KEY = 'stt_access_token_v1'
+
 function signalAuthExpired() {
   if (authExpiredSignaled) return
   authExpiredSignaled = true
@@ -21,12 +23,29 @@ function signalAuthExpired() {
   window.dispatchEvent(new Event('tt:auth-expired'))
 }
 
+export function resetAuthExpiredSignal() {
+  authExpiredSignaled = false
+}
+
 export function setAccessToken(token: string | null) {
   accessToken = token
+  try {
+    if (token) localStorage.setItem(ACCESS_TOKEN_KEY, token)
+    else localStorage.removeItem(ACCESS_TOKEN_KEY)
+  } catch {
+  }
 }
 
 export function getAccessToken(): string | null {
   return accessToken
+}
+
+export function loadAccessTokenFromStorage() {
+  try {
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY)
+    if (token) accessToken = token
+  } catch {
+  }
 }
 
 async function attemptRefresh(): Promise<boolean> {
