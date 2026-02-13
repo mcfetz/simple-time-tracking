@@ -271,7 +271,7 @@ export function HistoryPage() {
               style={{ gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr)' }}
             >
               <div>
-                {formatDateLocal(formatLocalDate(e.ts_utc, tz), lang)} {formatTime(e.ts_utc, tz)}
+                {formatTime(e.ts_utc, tz)}
               </div>
               <div>{e.type}</div>
               <div className="muted">{e.location ?? '-'}</div>
