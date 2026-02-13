@@ -106,6 +106,26 @@ export function DashboardPage() {
     loadMonth().catch(() => undefined)
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+
+    const tick = () => {
+      if (cancelled) return
+      if (document.visibilityState !== 'visible') return
+      loadStatus().catch(() => undefined)
+    }
+
+    const onVis = () => tick()
+    document.addEventListener('visibilitychange', onVis)
+
+    const id = window.setInterval(tick, 60_000)
+    return () => {
+      cancelled = true
+      window.clearInterval(id)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [])
+
   async function persistTodayNote(content: string) {
     if (!status) return
     const dateLocal = status.date_local
@@ -300,9 +320,7 @@ export function DashboardPage() {
       <section className="card">
         <div className="row">
           <h2 style={{ margin: 0 }}>Heute</h2>
-          <button className="secondary" disabled={loading} onClick={() => loadStatus()}>
-            Aktualisieren
-          </button>
+          <span className="muted small">auto</span>
         </div>
 
         {error ? <div className="error">{error}</div> : null}
