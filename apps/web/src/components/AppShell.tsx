@@ -22,7 +22,7 @@ export function AppShell() {
     <div className="shell">
       <header className="header desktopOnly">
         <div className="brand">
-          <Link to="/">Time Tracking</Link>
+          <Link to="/">STT - Simple Time Tracking</Link>
         </div>
         <div />
         <div className="headerRight">

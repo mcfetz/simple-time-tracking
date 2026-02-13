@@ -38,7 +38,7 @@ export function LoginPage() {
 
   return (
     <div className="page" style={{ paddingTop: 24 }}>
-      <div className="card" style={{ maxWidth: 520, width: '100%', justifySelf: 'center' }}>
+      <div className="card" style={{ maxWidth: 440, width: '100%', justifySelf: 'center' }}>
         <div style={{ display: 'grid', gap: 6 }}>
           <h1 style={{ margin: 0 }}>Time Tracking</h1>
           <p className="muted" style={{ margin: 0 }}>
