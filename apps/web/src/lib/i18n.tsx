@@ -33,6 +33,7 @@ const EN: Dict = {
   'common.close': 'Close',
 
   'common.loading': '...',
+  'common.refresh': 'Refresh',
   'common.save': 'Save',
   'common.delete': 'Delete',
   'common.cancel': 'Cancel',
@@ -150,6 +151,7 @@ const DE: Dict = {
   'common.close': 'Schließen',
 
   'common.loading': '...',
+  'common.refresh': 'Aktualisieren',
   'common.save': 'Speichern',
   'common.delete': 'Löschen',
   'common.cancel': 'Abbrechen',
