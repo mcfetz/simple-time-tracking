@@ -417,6 +417,11 @@ button.linkButton:hover {
   gap: 8px;
 }
 
+.reportsWeekList {
+  display: grid;
+  gap: 8px;
+}
+
 .thead,
 .trow {
   display: grid;

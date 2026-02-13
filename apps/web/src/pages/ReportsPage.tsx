@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
 import type { MonthReport, WeekReport } from '../lib/types'
 
@@ -9,19 +10,52 @@ function fmtMinutes(min: number): string {
 }
 
 export function ReportsPage() {
+  const [search, setSearch] = useSearchParams()
+
+  const todayLocal = useMemo(() => new Date().toISOString().slice(0, 10), [])
+  const weekStart = search.get('week') || ''
+  const monthKey = search.get('month') || ''
+
   const [week, setWeek] = useState<WeekReport | null>(null)
   const [month, setMonth] = useState<MonthReport | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  function setWeekParam(startLocal: string) {
+    const next = new URLSearchParams(search)
+    if (startLocal) next.set('week', startLocal)
+    else next.delete('week')
+    setSearch(next, { replace: true })
+  }
+
+  function setMonthParam(month: string) {
+    const next = new URLSearchParams(search)
+    if (month) next.set('month', month)
+    else next.delete('month')
+    setSearch(next, { replace: true })
+  }
+
+  function shiftIsoDate(iso: string, days: number): string {
+    const d = new Date(`${iso}T00:00:00`)
+    d.setDate(d.getDate() + days)
+    return d.toISOString().slice(0, 10)
+  }
+
+  function shiftMonthKey(yyyyMm: string, delta: number): string {
+    const [y, m] = yyyyMm.split('-').map((x) => Number(x))
+    const d = new Date(Date.UTC(y, m - 1, 1))
+    d.setUTCMonth(d.getUTCMonth() + delta)
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+  }
+
   useEffect(() => {
     ;(async () => {
       setError(null)
-      const w = await apiFetch<WeekReport>('/reports/week')
-      const m = await apiFetch<MonthReport>('/reports/month')
+      const w = await apiFetch<WeekReport>(weekStart ? `/reports/week?start=${encodeURIComponent(weekStart)}` : '/reports/week')
+      const m = await apiFetch<MonthReport>(monthKey ? `/reports/month?month=${encodeURIComponent(monthKey)}` : '/reports/month')
       setWeek(w)
       setMonth(m)
     })().catch((e) => setError((e as { message?: string })?.message || 'Fehler'))
-  }, [])
+  }, [weekStart, monthKey])
 
   return (
     <div className="page">
@@ -30,7 +64,30 @@ export function ReportsPage() {
 
       <div className="grid">
         <section className="card">
-          <h2>Woche</h2>
+          <div className="row" style={{ alignItems: 'center' }}>
+            <h2 style={{ margin: 0 }}>Woche</h2>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}>
+              <button
+                className="secondary"
+                type="button"
+                onClick={() => setWeekParam(shiftIsoDate((week?.week_start_local ?? weekStart) || todayLocal, -7))}
+              >
+                ◀
+              </button>
+              <input
+                type="date"
+                value={(week?.week_start_local ?? weekStart) || ''}
+                onChange={(e) => setWeekParam(e.target.value)}
+              />
+              <button
+                className="secondary"
+                type="button"
+                onClick={() => setWeekParam(shiftIsoDate((week?.week_start_local ?? weekStart) || todayLocal, 7))}
+              >
+                ▶
+              </button>
+            </div>
+          </div>
           {!week ? (
             <div className="muted">...</div>
           ) : (
@@ -50,23 +107,24 @@ export function ReportsPage() {
                 <strong>{fmtMinutes(week.total_break_minutes)}</strong>
               </div>
 
-              <div className="table">
-                <div className="thead">
-                  <div>Tag</div>
-                  <div>Arbeit</div>
-                  <div>Pause</div>
-                  <div>Warnungen</div>
-                </div>
+              <div className="reportsWeekList">
                 {week.days.map((d) => (
-                  <div key={d.date_local} className="trow">
-                    <div>{d.date_local}</div>
-                    <div>{fmtMinutes(d.worked_minutes)}</div>
-                    <div>{fmtMinutes(d.break_minutes)}</div>
-                    <div className="muted">
-                      {d.max_daily_work_exceeded ? '>10h ' : ''}
-                      {d.rest_period_violation ? 'Ruhezeit<11h ' : ''}
-                      {!d.break_compliant_total ? 'Pause' : ''}
+                  <div key={d.date_local} className="card" style={{ padding: 10 }}>
+                    <div className="row" style={{ alignItems: 'center' }}>
+                      <strong>{d.date_local}</strong>
+                      <span className="muted small">{fmtMinutes(d.worked_minutes)}</span>
                     </div>
+                    <div className="row">
+                      <span className="muted small">Pause</span>
+                      <span className="muted small">{fmtMinutes(d.break_minutes)}</span>
+                    </div>
+                    {d.max_daily_work_exceeded || d.rest_period_violation || !d.break_compliant_total ? (
+                      <div className="muted small">
+                        {d.max_daily_work_exceeded ? '>10h ' : ''}
+                        {d.rest_period_violation ? 'Ruhezeit<11h ' : ''}
+                        {!d.break_compliant_total ? 'Pause' : ''}
+                      </div>
+                    ) : null}
                   </div>
                 ))}
               </div>
@@ -75,7 +133,34 @@ export function ReportsPage() {
         </section>
 
         <section className="card">
-          <h2>Monat</h2>
+          <div className="row" style={{ alignItems: 'center' }}>
+            <h2 style={{ margin: 0 }}>Monat</h2>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}>
+              <button
+                className="secondary"
+                type="button"
+                onClick={() =>
+                  setMonthParam(shiftMonthKey((monthKey || month?.month_start_local?.slice(0, 7)) ?? todayLocal.slice(0, 7), -1))
+                }
+              >
+                ◀
+              </button>
+              <input
+                type="month"
+                value={(monthKey || month?.month_start_local?.slice(0, 7)) ?? ''}
+                onChange={(e) => setMonthParam(e.target.value)}
+              />
+              <button
+                className="secondary"
+                type="button"
+                onClick={() =>
+                  setMonthParam(shiftMonthKey((monthKey || month?.month_start_local?.slice(0, 7)) ?? todayLocal.slice(0, 7), 1))
+                }
+              >
+                ▶
+              </button>
+            </div>
+          </div>
           {!month ? (
             <div className="muted">...</div>
           ) : (
