@@ -28,31 +28,38 @@ export function RegisterPage() {
 
   return (
     <div className="page" style={{ paddingTop: 24 }}>
-      <div style={{ display: 'grid', gap: 6 }}>
-        <h1 style={{ margin: 0 }}>Registrieren</h1>
+      <div className="card" style={{ maxWidth: 440, width: '100%', justifySelf: 'center' }}>
+        <div style={{ display: 'grid', gap: 6 }}>
+          <div style={{ display: 'grid', gap: 2, justifyItems: 'center', textAlign: 'center' }}>
+            <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: 0.3 }}>STT</div>
+            <div className="muted" style={{ fontSize: 14 }}>
+              Simple Time Tracking
+            </div>
+          </div>
+          <p className="muted" style={{ margin: 0 }}>
+            Account erstellen.
+          </p>
+        </div>
+
+        <form onSubmit={onSubmit} style={{ display: 'grid', gap: 12, marginTop: 8 }}>
+          <label>
+            E-Mail
+            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
+          </label>
+          <label>
+            Passwort (min. 8 Zeichen)
+            <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required minLength={8} />
+          </label>
+          {error ? <div className="error">{error}</div> : null}
+          <button type="submit" disabled={loading}>
+            {loading ? '...' : 'Account erstellen'}
+          </button>
+        </form>
+
         <p className="muted" style={{ margin: 0 }}>
-          Neuen Benutzer anlegen.
+          Schon registriert? <Link to="/login">Zum Login</Link>
         </p>
       </div>
-
-      <form onSubmit={onSubmit} className="card">
-        <label>
-          E-Mail
-          <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
-        </label>
-        <label>
-          Passwort (min. 8 Zeichen)
-          <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required minLength={8} />
-        </label>
-        {error ? <div className="error">{error}</div> : null}
-        <button type="submit" disabled={loading}>
-          {loading ? '...' : 'Account erstellen'}
-        </button>
-      </form>
-
-      <p className="muted">
-        Schon registriert? <Link to="/login">Zum Login</Link>
-      </p>
     </div>
   )
 }
