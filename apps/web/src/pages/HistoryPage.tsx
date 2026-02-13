@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth'
 import { deleteDayNote, getDayNote, upsertDayNote } from '../lib/notes'
 import type { ClockEvent } from '../lib/types'
 import { NoteModal } from '../components/NoteModal'
+import { IconPencil, IconTrash } from '../components/icons'
 import { useI18n } from '../lib/i18n'
 import { formatDateLocal, formatTime, localIsoDateFromUtc } from '../lib/format'
 import { useSearchParams } from 'react-router-dom'
@@ -276,11 +277,27 @@ export function HistoryPage() {
               <div>{e.type}</div>
               <div className="muted">{e.location ?? '-'}</div>
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                <button className="secondary" type="button" disabled={loading} onClick={() => startEdit(e)}>
-                  {t('history.edit')}
+                <button
+                  className="secondary"
+                  type="button"
+                  disabled={loading}
+                  onClick={() => startEdit(e)}
+                  aria-label={t('history.edit')}
+                  title={t('history.edit')}
+                  style={{ padding: 8, lineHeight: 0 }}
+                >
+                  <IconPencil className="navIcon" />
                 </button>
-                <button type="button" disabled={loading} onClick={() => onDelete(e.id)}>
-                  {t('history.delete')}
+                <button
+                  className="secondary"
+                  type="button"
+                  disabled={loading}
+                  onClick={() => onDelete(e.id)}
+                  aria-label={t('history.delete')}
+                  title={t('history.delete')}
+                  style={{ padding: 8, lineHeight: 0, borderColor: 'rgba(239, 68, 68, 0.35)', color: '#991b1b' }}
+                >
+                  <IconTrash className="navIcon" />
                 </button>
               </div>
             </div>
