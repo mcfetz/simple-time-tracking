@@ -1,6 +1,8 @@
+# ruff: noqa: B008
+
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, UTC
 
 from zoneinfo import ZoneInfo
 
@@ -23,8 +25,8 @@ from app.security import get_current_user
 
 def _as_utc(value: datetime) -> datetime:
     if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
-    return value.astimezone(timezone.utc)
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
 
 
 router = APIRouter(prefix="/reports", tags=["reports"])
@@ -35,14 +37,14 @@ def _week_start(d: date) -> date:
 
 
 @router.get("/week", response_model=WeekReportResponse)
-def week_report(
+def week_report(  # noqa: PLR0915
     start: str | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     tz = current_user.timezone
     zone = ZoneInfo(tz)
-    today_local = datetime.now(timezone.utc).astimezone(zone).date()
+    today_local = datetime.now(UTC).astimezone(zone).date()
     week_start = (
         _week_start(today_local) if start is None else date.fromisoformat(start)
     )
@@ -103,7 +105,7 @@ def week_report(
         key = local_date.isoformat()
         by_day.setdefault(key, []).append((e.type, e.ts_utc, e.location))
 
-    now_utc = datetime.now(timezone.utc)
+    now_utc = datetime.now(UTC)
     days: list[ReportDay] = []
     total_worked = 0
     total_break = 0
@@ -174,7 +176,7 @@ def week_report(
 
 
 @router.get("/month", response_model=MonthReportResponse)
-def month_report(
+def month_report(  # noqa: PLR0912, PLR0915
     month: str | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -182,24 +184,21 @@ def month_report(
     tz = current_user.timezone
     zone = ZoneInfo(tz)
 
-    today_local = datetime.now(timezone.utc).astimezone(zone).date()
+    today_local = datetime.now(UTC).astimezone(zone).date()
     if month is None:
         year = today_local.year
         mon = today_local.month
     else:
         parts = month.split("-")
-        if len(parts) != 2:
+        if len(parts) != 2:  # noqa: PLR2004
             raise HTTPException(status_code=422, detail="Invalid month")
         year = int(parts[0])
         mon = int(parts[1])
-        if mon < 1 or mon > 12:
+        if mon < 1 or mon > 12:  # noqa: PLR2004
             raise HTTPException(status_code=422, detail="Invalid month")
 
     month_start = date(year, mon, 1)
-    if mon == 12:
-        month_end = date(year + 1, 1, 1)
-    else:
-        month_end = date(year, mon + 1, 1)
+    month_end = date(year + 1, 1, 1) if mon == 12 else date(year, mon + 1, 1)  # noqa: PLR2004
 
     start_utc, _ = day_bounds_utc(month_start, tz)
     end_utc, _ = day_bounds_utc(month_end, tz)
@@ -252,7 +251,7 @@ def month_report(
         key = local_date.isoformat()
         by_day.setdefault(key, []).append((e.type, e.ts_utc, e.location))
 
-    now_utc = datetime.now(timezone.utc)
+    now_utc = datetime.now(UTC)
     days: list[ReportDay] = []
     total_worked = 0
     total_break = 0

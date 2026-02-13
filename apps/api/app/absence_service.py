@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, UTC
 
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
-from app.models import Absence, AbsenceReason, User
+from zoneinfo import ZoneInfo
+from app.models import Absence, AbsenceReason
 
 
 def user_has_absence_on_date(
@@ -21,13 +22,11 @@ def user_has_absence_on_date(
 
 
 def local_date_from_utc(ts_utc: datetime, tz: str) -> date:
-    from zoneinfo import ZoneInfo
 
     zone = ZoneInfo(tz)
-    if ts_utc.tzinfo is None:
-        ts_utc = ts_utc.replace(tzinfo=timezone.utc)
-    else:
-        ts_utc = ts_utc.astimezone(timezone.utc)
+    ts_utc = (
+        ts_utc.replace(tzinfo=UTC) if ts_utc.tzinfo is None else ts_utc.astimezone(UTC)
+    )
     return ts_utc.astimezone(zone).date()
 
 

@@ -1,8 +1,10 @@
+# ruff: noqa: B008
+
 from __future__ import annotations
 
 import hashlib
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 
 import bcrypt
 from fastapi import Depends, HTTPException, status
@@ -21,13 +23,13 @@ http_bearer = HTTPBearer(auto_error=False)
 
 def _as_utc(value: datetime) -> datetime:
     if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
-    return value.astimezone(timezone.utc)
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
 
 
 def _password_bytes(password: str) -> bytes:
     raw = password.encode("utf-8")
-    if len(raw) > 72:
+    if len(raw) > 72:  # noqa: PLR2004
         return hashlib.sha256(raw).digest()
     return raw
 
@@ -45,7 +47,7 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 
 def create_access_token(*, user_id: int) -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     exp = now + timedelta(minutes=settings.access_token_minutes)
     payload = {
         "sub": str(user_id),

@@ -1,28 +1,35 @@
+# ruff: noqa: B008
+
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, date, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy import desc, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.db import get_db
 from app.clock_validation import validate_event_fields, validate_sequence
+from app.db import get_db
 from app.models import ClockEvent, User, utc_now
-from ..absence_service import local_date_from_utc, user_has_absence_on_date
-from app.schemas import ClockEventResponse, CreateClockEventRequest, Geo
-from app.schemas import UpdateClockEventRequest
+from app.schemas import (
+    ClockEventResponse,
+    CreateClockEventRequest,
+    Geo,
+    UpdateClockEventRequest,
+)
 from app.security import get_current_user
 
+from ..absence_service import local_date_from_utc, user_has_absence_on_date
 
 router = APIRouter(prefix="/clock", tags=["clock"])
 
 
 def _as_utc(value: datetime) -> datetime:
     if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
-    return value.astimezone(timezone.utc)
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
 
 
 def _validate_payload(
@@ -88,11 +95,10 @@ def _enforce_transition(last: ClockEvent | None, next_type: str) -> None:
                 status_code=status.HTTP_409_CONFLICT, detail="Already working"
             )
 
-    if last_type == "GO":
-        if next_type != "COME":
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail="Invalid transition"
-            )
+    if last_type == "GO" and next_type != "COME":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Invalid transition"
+        )
 
 
 def _load_user_events(db: Session, user_id: int) -> list[ClockEvent]:
@@ -123,10 +129,11 @@ def create_event(
     client_ts = payload.ts_utc is not None
     if payload.ts_utc is not None:
         candidate = payload.ts_utc
-        if candidate.tzinfo is None:
-            candidate = candidate.replace(tzinfo=timezone.utc)
-        else:
-            candidate = candidate.astimezone(timezone.utc)
+        candidate = (
+            candidate.replace(tzinfo=UTC)
+            if candidate.tzinfo is None
+            else candidate.astimezone(UTC)
+        )
 
         if candidate > now + timedelta(minutes=5):
             raise HTTPException(
@@ -213,8 +220,6 @@ def list_events(
     start_local: str | None = None,
     end_local_exclusive: str | None = None,
 ):
-    from datetime import date, datetime, time
-    from zoneinfo import ZoneInfo
 
     stmt = select(ClockEvent).where(ClockEvent.user_id == current_user.id)
 
@@ -232,7 +237,7 @@ def list_events(
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Invalid date format; expected YYYY-MM-DD",
-            )
+            ) from None
 
         if end_d <= start_d:
             raise HTTPException(
@@ -243,8 +248,8 @@ def list_events(
         zone = ZoneInfo(current_user.timezone)
         start_dt_local = datetime.combine(start_d, time.min).replace(tzinfo=zone)
         end_dt_local = datetime.combine(end_d, time.min).replace(tzinfo=zone)
-        start_utc = start_dt_local.astimezone(timezone.utc)
-        end_utc = end_dt_local.astimezone(timezone.utc)
+        start_utc = start_dt_local.astimezone(UTC)
+        end_utc = end_dt_local.astimezone(UTC)
 
         stmt = (
             stmt.where(ClockEvent.ts_utc >= start_utc)
@@ -294,8 +299,6 @@ def delete_event(
     db.delete(event)
     db.commit()
 
-    return None
-
 
 @router.put("/events/{event_id}", response_model=ClockEventResponse)
 def update_event(
@@ -319,10 +322,11 @@ def update_event(
 
     if payload.ts_utc is not None:
         candidate = payload.ts_utc
-        if candidate.tzinfo is None:
-            candidate = candidate.replace(tzinfo=timezone.utc)
-        else:
-            candidate = candidate.astimezone(timezone.utc)
+        candidate = (
+            candidate.replace(tzinfo=UTC)
+            if candidate.tzinfo is None
+            else candidate.astimezone(UTC)
+        )
 
         now = utc_now()
         if candidate > now + timedelta(minutes=5):

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from fastapi import HTTPException, status
 
@@ -9,8 +9,8 @@ from app.models import ClockEvent
 
 def as_utc(value: datetime) -> datetime:
     if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
-    return value.astimezone(timezone.utc)
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
 
 
 def validate_event_fields(*, event_type: str, location: str | None) -> None:
@@ -38,7 +38,7 @@ def validate_event_fields(*, event_type: str, location: str | None) -> None:
         )
 
 
-def validate_sequence(events: list[ClockEvent]) -> None:
+def validate_sequence(events: list[ClockEvent]) -> None:  # noqa: PLR0912
     if not events:
         return
 
@@ -79,8 +79,7 @@ def validate_sequence(events: list[ClockEvent]) -> None:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT, detail="Already working"
                 )
-        elif prev.type == "GO":
-            if e.type != "COME":
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT, detail="Invalid transition"
-                )
+        elif prev.type == "GO" and e.type != "COME":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="Invalid transition"
+            )

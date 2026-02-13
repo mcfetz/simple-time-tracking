@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from app.time_calc import (
     as_utc,
@@ -43,15 +44,14 @@ def iter_local_days(start_local: date, end_local_exclusive: date) -> list[date]:
 
 
 def day_bounds_utc(day_local: date, tz: str) -> tuple[datetime, datetime]:
-    from zoneinfo import ZoneInfo
 
     zone = ZoneInfo(tz)
     start_local = datetime(day_local.year, day_local.month, day_local.day, tzinfo=zone)
     end_local = start_local + timedelta(days=1)
-    return start_local.astimezone(timezone.utc), end_local.astimezone(timezone.utc)
+    return start_local.astimezone(UTC), end_local.astimezone(UTC)
 
 
-def compute_day_summary(
+def compute_day_summary(  # noqa: PLR0912, PLR0913, PLR0915
     *,
     day_local: date,
     tz: str,

@@ -1,6 +1,9 @@
+# ruff: noqa: B008
+
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import and_, desc, select
@@ -18,7 +21,6 @@ from app.schemas import (
 )
 from app.security import get_current_user
 
-
 router = APIRouter(prefix="/absences", tags=["absences"])
 
 
@@ -34,7 +36,6 @@ def _assert_valid_range(start_date: date, end_date: date) -> None:
 def _user_has_clock_events_in_range(
     db: Session, user_id: int, tz: str, start_date: date, end_date: date
 ) -> bool:
-    from zoneinfo import ZoneInfo
 
     zone = ZoneInfo(tz)
     start_dt_local = datetime(
@@ -44,8 +45,8 @@ def _user_has_clock_events_in_range(
     end_dt_local = end_dt_local.replace(
         hour=23, minute=59, second=59, microsecond=999999
     )
-    start_utc = start_dt_local.astimezone(timezone.utc)
-    end_utc = end_dt_local.astimezone(timezone.utc)
+    start_utc = start_dt_local.astimezone(UTC)
+    end_utc = end_dt_local.astimezone(UTC)
 
     stmt = (
         select(ClockEvent.id)
@@ -142,7 +143,6 @@ def delete_reason(
 
     db.delete(reason)
     db.commit()
-    return None
 
 
 @router.get("", response_model=list[AbsenceResponse])
@@ -241,7 +241,6 @@ def delete_absence(
         raise HTTPException(status_code=404, detail="Not found")
     db.delete(absence)
     db.commit()
-    return None
 
 
 @router.put("/{absence_id}", response_model=AbsenceResponse)
