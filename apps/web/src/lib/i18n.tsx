@@ -234,9 +234,9 @@ const DE: Dict = {
   'absences.reasonDeleteHint': 'Hinweis: Löschen schlägt fehl, wenn der Grund noch von Abwesenheiten verwendet wird.',
   'absences.noReasons': 'Keine Gründe.',
 
-  'settings.title': 'Settings',
-  'settings.language': 'Language',
-  'settings.appLanguage': 'App language',
+  'settings.title': 'Einstellungen',
+  'settings.language': 'Sprache',
+  'settings.appLanguage': 'App Sprache',
   'settings.dailyTarget': 'Sollarbeitszeit pro Tag (Minuten)',
   'settings.homeOfficeTarget': 'Home-Office Ziel (0..1)',
   'settings.overtimeStart': 'Startdatum Stundenkonto',
