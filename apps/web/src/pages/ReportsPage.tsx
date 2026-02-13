@@ -35,9 +35,10 @@ export function ReportsPage() {
   }
 
   function shiftIsoDate(iso: string, days: number): string {
-    const d = new Date(`${iso}T00:00:00`)
-    d.setDate(d.getDate() + days)
-    return d.toISOString().slice(0, 10)
+    const [y, m, dd] = iso.split('-').map((x) => Number(x))
+    const d = new Date(Date.UTC(y, m - 1, dd))
+    d.setUTCDate(d.getUTCDate() + days)
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
   }
 
   function shiftMonthKey(yyyyMm: string, delta: number): string {
