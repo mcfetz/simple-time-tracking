@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { useI18n } from '../lib/i18n'
+import { IconHistory } from '../components/icons'
 
 export function LoginPage() {
   const auth = useAuth()
@@ -43,7 +44,22 @@ export function LoginPage() {
       <div className="card" style={{ maxWidth: 440, width: '100%', justifySelf: 'center' }}>
         <div style={{ display: 'grid', gap: 6 }}>
           <div style={{ display: 'grid', gap: 2, justifyItems: 'center', textAlign: 'center' }}>
-            <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: 0.3 }}>⏱  STT</div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+                fontSize: 30,
+                fontWeight: 800,
+                letterSpacing: 0.3,
+              }}
+            >
+              <span aria-hidden="true" style={{ width: 28, height: 28, display: 'grid', placeItems: 'center' }}>
+                <IconHistory className="" />
+              </span>
+              <span>STT</span>
+            </div>
             <div className="muted" style={{ fontSize: 14 }}>
               {t('app.name.long')}
             </div>

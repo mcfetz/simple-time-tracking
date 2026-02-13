@@ -5,7 +5,7 @@ import { useAuth } from '../lib/auth'
 import type { CreateClockEventRequest, DailyStatusResponse, MonthReport } from '../lib/types'
 import { enqueueClockEvent, flushClockEventQueue, subscribeQueueCount } from '../lib/offlineQueue'
 import { useI18n } from '../lib/i18n'
-import { formatDateLocal } from '../lib/format'
+import { formatDateLocal, parseIsoDateUtc } from '../lib/format'
 
 
 function formatMinutes(min: number): string {
@@ -77,6 +77,7 @@ function geoSupported(): boolean {
 export function DashboardPage() {
   const auth = useAuth()
   const { t, lang } = useI18n()
+
   const [status, setStatus] = useState<DailyStatusResponse | null>(null)
   const [month, setMonth] = useState<MonthReport | null>(null)
   const [loading, setLoading] = useState(false)
@@ -90,6 +91,39 @@ export function DashboardPage() {
 
   const [useGeo, setUseGeo] = useState(false)
   const [queued, setQueued] = useState(0)
+
+  const fallbackTodayLocal = useMemo(() => {
+    const d = new Date()
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd}`
+  }, [])
+
+  const monthName = useMemo(() => {
+    const locale = lang === 'de' ? 'de-DE' : 'en-US'
+    const iso = month?.month_start_local ?? fallbackTodayLocal
+    const dt = parseIsoDateUtc(iso)
+    if (!dt) return ''
+    return new Intl.DateTimeFormat(locale, { month: 'long', timeZone: 'UTC' }).format(dt)
+  }, [fallbackTodayLocal, lang, month?.month_start_local])
+
+  const heatmapWeekdayLabels = useMemo(() => {
+    if (!month) return null
+    const start = parseIsoDateUtc(month.month_start_local)
+    if (!start) return null
+
+    const map: Record<number, string> =
+      lang === 'de'
+        ? { 1: 'Mo', 3: 'Mi', 5: 'Fr' }
+        : { 1: 'Mo', 3: 'We', 5: 'Fr' }
+
+    return Array.from({ length: 14 }).map((_, idx) => {
+      const d = new Date(start.getTime())
+      d.setUTCDate(d.getUTCDate() + idx)
+      return map[d.getUTCDay()] ?? ''
+    })
+  }, [lang, month])
 
   const canGeo = useMemo(() => geoSupported(), [])
 
@@ -324,7 +358,12 @@ export function DashboardPage() {
       ) : null}
       <section className="card">
         <div className="row">
-          <h2 style={{ margin: 0 }}>{t('dashboard.today')}</h2>
+          <h2 style={{ margin: 0 }}>
+            {t('dashboard.today')}{' '}
+            <span className="muted" style={{ fontWeight: 500 }}>
+              · {formatDateLocal(status?.date_local ?? fallbackTodayLocal, lang)}
+            </span>
+          </h2>
         </div>
 
         {error ? <div className="error">{error}</div> : null}
@@ -464,7 +503,12 @@ export function DashboardPage() {
       </section>
 
       <section className="card">
-        <h2 style={{ margin: 0 }}>{t('dashboard.month')}</h2>
+        <h2 style={{ margin: 0 }}>
+          {t('dashboard.month')}{' '}
+          <span className="muted" style={{ fontWeight: 500 }}>
+            · {monthName}
+          </span>
+        </h2>
         {!month || !status ? <div className="muted">...</div> : null}
 
         {overtime ? (
@@ -477,24 +521,34 @@ export function DashboardPage() {
           </div>
         ) : null}
 
-        {heatmapDays.length > 0 ? (
-          <div className="heatmap">
-            {heatmapDays.map((d) => (
-              <div
-                key={d.date_local}
-                className={`heat${d.hasNote ? ' heatNote' : ''}`}
-                style={{ background: d.color }}
-                title={
-                  d.isBeforeStart
-                    ? `${formatDateLocal(d.date_local, lang)}: ${t('dashboard.heatmap.beforeOvertimeStart')}`
-                    : d.isAbsence
-                      ? `${formatDateLocal(d.date_local, lang)}: ${t('dashboard.heatmap.absence')} (${d.absenceReason ?? '—'})`
-                      : `${formatDateLocal(d.date_local, lang)}: ${formatMinutes(d.worked_minutes)} / ${formatMinutes(d.expected_minutes)}${
-                          d.hasNote ? ` (${t('dashboard.heatmap.note')})` : ''
-                        }`
-                }
-              />
-            ))}
+        {heatmapDays.length > 0 && month ? (
+          <div className="heatmapWrap">
+            <div className="heatmapWeekdays" aria-hidden="true">
+              {(heatmapWeekdayLabels ?? Array.from({ length: 14 }).map(() => '')).map((label, idx) => (
+                <div key={idx} className="heatmapWeekday">
+                  {label}
+                </div>
+              ))}
+            </div>
+
+            <div className="heatmap">
+              {heatmapDays.map((d) => (
+                <div
+                  key={d.date_local}
+                  className={`heat${d.hasNote ? ' heatNote' : ''}`}
+                  style={{ background: d.color }}
+                  title={
+                    d.isBeforeStart
+                      ? `${formatDateLocal(d.date_local, lang)}: ${t('dashboard.heatmap.beforeOvertimeStart')}`
+                      : d.isAbsence
+                        ? `${formatDateLocal(d.date_local, lang)}: ${t('dashboard.heatmap.absence')} (${d.absenceReason ?? '—'})`
+                        : `${formatDateLocal(d.date_local, lang)}: ${formatMinutes(d.worked_minutes)} / ${formatMinutes(d.expected_minutes)}${
+                            d.hasNote ? ` (${t('dashboard.heatmap.note')})` : ''
+                          }`
+                  }
+                />
+              ))}
+            </div>
           </div>
         ) : null}
       </section>

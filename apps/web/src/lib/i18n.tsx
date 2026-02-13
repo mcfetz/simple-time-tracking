@@ -181,7 +181,7 @@ const DE: Dict = {
   'dashboard.breakStart': 'Pause Beginn',
   'dashboard.breakEnd': 'Pause Ende',
   'dashboard.notePlaceholder': 'Notiz (mehrzeilig)',
-  'dashboard.logout': 'Logout',
+  'dashboard.logout': 'Abmelden',
   'dashboard.absenceFullDay': 'Ganztägige Abwesenheit',
   'dashboard.offlineBanner': 'Offline – Aktionen werden zwischengespeichert.',
   'dashboard.queue': 'Queue',
