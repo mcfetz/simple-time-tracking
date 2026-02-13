@@ -137,25 +137,20 @@ button:disabled {
 @media (min-width: 900px) {
   .header {
     position: fixed;
-    top: 0;
     left: 0;
     right: 0;
+    top: 0;
     z-index: 40;
+    padding-top: calc(12px + env(safe-area-inset-top));
+  }
+
+  .tabBar {
+    display: none;
   }
 
   .main {
-    padding-top: calc(56px + var(--pad));
-  }
-}
-
-@media (min-width: 900px) {
-  .header {
-    position: fixed;
-    left: 0;
-    right: 0;
-    top: 0;
-    z-index: 20;
-    padding-top: calc(12px + env(safe-area-inset-top));
+    padding-top: calc(56px + var(--pad) + env(safe-area-inset-top));
+    padding-bottom: var(--pad);
   }
 }
 
@@ -177,6 +172,11 @@ button:disabled {
 .brandIcon svg {
   width: 20px;
   height: 20px;
+}
+
+.authLogoIcon {
+  width: 24px;
+  height: 24px;
 }
 
 .nav {

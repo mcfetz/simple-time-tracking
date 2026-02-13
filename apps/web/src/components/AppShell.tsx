@@ -34,21 +34,7 @@ export function AppShell() {
             <span>STT - Simple Time Tracking</span>
           </Link>
         </div>
-        <nav className="nav" aria-label="Navigation">
-          {TABS.map((tab) => (
-            <NavLink
-              key={tab.to}
-              to={tab.to}
-              end={tab.to === '/'}
-              className={({ isActive }) => `navItem${isActive ? ' active' : ''}`}
-            >
-              <span className="navIcon" aria-hidden="true">
-                <tab.icon />
-              </span>
-              <span className="navLabel">{t(tab.label)}</span>
-            </NavLink>
-          ))}
-        </nav>
+        <div />
         <div className="headerRight">
           {auth.state.status === 'authenticated' ? <span className="muted small">{auth.state.user.email}</span> : null}
         </div>
@@ -58,7 +44,7 @@ export function AppShell() {
         <Outlet />
       </main>
 
-      <nav className="tabBar mobileOnly" aria-label="Navigation">
+      <nav className="tabBar" aria-label="Navigation">
         {TABS.map((tab) => (
           <NavLink
             key={tab.to}
