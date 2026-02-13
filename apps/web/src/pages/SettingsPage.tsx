@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { apiFetch } from '../lib/api'
-import type { AbsenceReason, UserSettings } from '../lib/types'
+import type { UserSettings } from '../lib/types'
 
 export function SettingsPage() {
   const [settings, setSettings] = useState<UserSettings | null>(null)
@@ -11,10 +11,6 @@ export function SettingsPage() {
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
 
-  const [reasons, setReasons] = useState<AbsenceReason[]>([])
-  const [newReason, setNewReason] = useState('')
-  const [reasonsError, setReasonsError] = useState<string | null>(null)
-
   async function load() {
     setError(null)
     const data = await apiFetch<UserSettings>('/settings/me')
@@ -22,9 +18,6 @@ export function SettingsPage() {
     setDailyTargetMinutes(data.daily_target_minutes)
     setHomeOfficeRatio(data.home_office_target_ratio)
     setOvertimeStartDate(data.overtime_start_date ?? '')
-
-    const rs = await apiFetch<AbsenceReason[]>('/absences/reasons')
-    setReasons(rs)
   }
 
   useEffect(() => {
@@ -51,43 +44,6 @@ export function SettingsPage() {
       setError((err as { message?: string })?.message || 'Fehler')
     } finally {
       setLoading(false)
-    }
-  }
-
-  async function addReason() {
-    const name = newReason.trim()
-    if (!name) return
-    setReasonsError(null)
-    try {
-      await apiFetch<AbsenceReason>('/absences/reasons', { method: 'POST', body: { name } })
-      setNewReason('')
-      const rs = await apiFetch<AbsenceReason[]>('/absences/reasons')
-      setReasons(rs)
-    } catch (e) {
-      setReasonsError((e as { message?: string })?.message || 'Fehler')
-    }
-  }
-
-  async function renameReason(id: number, name: string) {
-    setReasonsError(null)
-    try {
-      await apiFetch<AbsenceReason>(`/absences/reasons/${id}`, { method: 'PUT', body: { name } })
-      const rs = await apiFetch<AbsenceReason[]>('/absences/reasons')
-      setReasons(rs)
-    } catch (e) {
-      setReasonsError((e as { message?: string })?.message || 'Fehler')
-    }
-  }
-
-  async function deleteReason(id: number) {
-    if (!confirm('Grund wirklich löschen?')) return
-    setReasonsError(null)
-    try {
-      await apiFetch<void>(`/absences/reasons/${id}`, { method: 'DELETE' })
-      const rs = await apiFetch<AbsenceReason[]>('/absences/reasons')
-      setReasons(rs)
-    } catch (e) {
-      setReasonsError((e as { message?: string })?.message || 'Fehler')
     }
   }
 
@@ -140,40 +96,6 @@ export function SettingsPage() {
             {saved ? <div className="ok">Gespeichert.</div> : null}
           </form>
 
-          <section className="card">
-            <h2>Abwesenheitsgründe</h2>
-            {reasonsError ? <div className="error">{reasonsError}</div> : null}
-
-            <div className="row" style={{ gap: 10 }}>
-              <input
-                value={newReason}
-                onChange={(e) => setNewReason(e.target.value)}
-                placeholder="Neuer Grund"
-              />
-              <button type="button" onClick={() => addReason()}>
-                Hinzufügen
-              </button>
-            </div>
-
-            <div className="table">
-              {reasons.map((r) => (
-                <div key={r.id} className="trow" style={{ gridTemplateColumns: '1fr 220px' }}>
-                  <input
-                    defaultValue={r.name}
-                    onBlur={(e) => {
-                      const name = e.target.value.trim()
-                      if (name && name !== r.name) renameReason(r.id, name)
-                    }}
-                  />
-                  <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                    <button className="secondary" type="button" onClick={() => deleteReason(r.id)}>
-                      Löschen
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
         </>
       ) : null}
     </div>
