@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth'
 import type { CreateClockEventRequest, DailyStatusResponse, MonthReport } from '../lib/types'
 import { enqueueClockEvent, flushClockEventQueue, subscribeQueueCount } from '../lib/offlineQueue'
 import { useI18n } from '../lib/i18n'
+import { formatDateLocal } from '../lib/format'
 
 
 function formatMinutes(min: number): string {
@@ -75,7 +76,7 @@ function geoSupported(): boolean {
 
 export function DashboardPage() {
   const auth = useAuth()
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const [status, setStatus] = useState<DailyStatusResponse | null>(null)
   const [month, setMonth] = useState<MonthReport | null>(null)
   const [loading, setLoading] = useState(false)
@@ -333,7 +334,8 @@ export function DashboardPage() {
           <>
             {status.absence ? (
               <div className="warn">
-                {t('dashboard.absenceFullDay')}: {status.absence.reason.name} ({status.absence.start_date} – {status.absence.end_date})
+                {t('dashboard.absenceFullDay')}: {status.absence.reason.name} ({formatDateLocal(status.absence.start_date, lang)} –{' '}
+                {formatDateLocal(status.absence.end_date, lang)})
               </div>
             ) : null}
 
@@ -483,11 +485,11 @@ export function DashboardPage() {
                 className={`heat${d.hasNote ? ' heatNote' : ''}`}
                 style={{ background: d.color }}
                 title={
-                    d.isBeforeStart
-                    ? `${d.date_local}: ${t('dashboard.heatmap.beforeOvertimeStart')}`
+                  d.isBeforeStart
+                    ? `${formatDateLocal(d.date_local, lang)}: ${t('dashboard.heatmap.beforeOvertimeStart')}`
                     : d.isAbsence
-                      ? `${d.date_local}: ${t('dashboard.heatmap.absence')} (${d.absenceReason ?? '—'})`
-                      : `${d.date_local}: ${formatMinutes(d.worked_minutes)} / ${formatMinutes(d.expected_minutes)}${
+                      ? `${formatDateLocal(d.date_local, lang)}: ${t('dashboard.heatmap.absence')} (${d.absenceReason ?? '—'})`
+                      : `${formatDateLocal(d.date_local, lang)}: ${formatMinutes(d.worked_minutes)} / ${formatMinutes(d.expected_minutes)}${
                           d.hasNote ? ` (${t('dashboard.heatmap.note')})` : ''
                         }`
                 }

@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
 import type { MonthReport, WeekReport } from '../lib/types'
 import { useI18n } from '../lib/i18n'
+import { formatDateLocal } from '../lib/format'
 
 function fmtMinutes(min: number): string {
   const h = Math.floor(min / 60)
@@ -11,7 +12,7 @@ function fmtMinutes(min: number): string {
 }
 
 export function ReportsPage() {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const [search, setSearch] = useSearchParams()
 
   const todayLocal = useMemo(() => new Date().toISOString().slice(0, 10), [])
@@ -98,7 +99,7 @@ export function ReportsPage() {
               <div className="row">
                 <span className="muted">{t('reports.period')}</span>
                 <strong>
-                  {week.week_start_local} – {week.week_end_local_exclusive}
+                  {formatDateLocal(week.week_start_local, lang)} – {formatDateLocal(week.week_end_local_exclusive, lang)}
                 </strong>
               </div>
               <div className="row">
@@ -171,7 +172,7 @@ export function ReportsPage() {
               <div className="row">
                 <span className="muted">{t('reports.period')}</span>
                 <strong>
-                  {month.month_start_local} – {month.month_end_local_exclusive}
+                  {formatDateLocal(month.month_start_local, lang)} – {formatDateLocal(month.month_end_local_exclusive, lang)}
                 </strong>
               </div>
               <div className="row">

@@ -6,6 +6,7 @@ import { deleteDayNote, getDayNote, upsertDayNote } from '../lib/notes'
 import type { ClockEvent } from '../lib/types'
 import { NoteModal } from '../components/NoteModal'
 import { useI18n } from '../lib/i18n'
+import { formatDateLocal, formatTime, localIsoDateFromUtc } from '../lib/format'
 
 type EditState = {
   id: number
@@ -20,23 +21,12 @@ type DayGroup = {
 }
 
 function formatLocalDate(tsUtc: string, tz: string): string {
-  const d = new Date(tsUtc)
-  return new Intl.DateTimeFormat('sv-SE', {
-    timeZone: tz,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(d)
-}
-
-function toLocal(tsUtc: string, tz: string): string {
-  const d = new Date(tsUtc)
-  return d.toLocaleString(undefined, { timeZone: tz })
+  return localIsoDateFromUtc(tsUtc, tz)
 }
 
 export function HistoryPage() {
   const auth = useAuth()
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const tz = auth.state.status === 'authenticated' ? auth.state.user.timezone : 'UTC'
 
   const [events, setEvents] = useState<ClockEvent[]>([])
@@ -220,7 +210,7 @@ export function HistoryPage() {
       {grouped.map((g) => (
         <section key={g.date_local} className="card">
           <div className="row">
-            <strong>{g.date_local}</strong>
+            <strong>{formatDateLocal(g.date_local, lang)}</strong>
             <button className="secondary" type="button" disabled={loading} onClick={() => openNote(g.date_local)}>
               {t('common.note')}
             </button>
@@ -238,7 +228,9 @@ export function HistoryPage() {
               className="trow"
               style={{ gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr)' }}
             >
-              <div>{toLocal(e.ts_utc, tz)}</div>
+              <div>
+                {formatDateLocal(formatLocalDate(e.ts_utc, tz), lang)} {formatTime(e.ts_utc, tz)}
+              </div>
               <div>{e.type}</div>
               <div className="muted">{e.location ?? '-'}</div>
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>

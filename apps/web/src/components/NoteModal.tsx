@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useI18n } from '../lib/i18n'
+import { formatDateLocal } from '../lib/format'
 
 type Props = {
   dateLocal: string
@@ -20,7 +21,7 @@ export function NoteModal({
   onSave,
   onDelete,
 }: Props) {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const [value, setValue] = useState(initialContent)
 
   useEffect(() => {
@@ -34,7 +35,7 @@ export function NoteModal({
       <div className="modal" onMouseDown={(e) => e.stopPropagation()}>
         <div className="row">
           <strong>
-            {t('common.note')}: {dateLocal}
+            {t('common.note')}: {formatDateLocal(dateLocal, lang)}
           </strong>
           <button type="button" className="secondary" onClick={onClose}>
             {t('common.close')}

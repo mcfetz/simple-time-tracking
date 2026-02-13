@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { apiFetch } from '../lib/api'
 import type { Absence, AbsenceReason } from '../lib/types'
 import { useI18n } from '../lib/i18n'
+import { formatDateLocal } from '../lib/format'
 
 type Draft = {
   start_date: string
@@ -10,7 +11,7 @@ type Draft = {
 }
 
 export function AbsencesPage() {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const [reasons, setReasons] = useState<AbsenceReason[]>([])
   const [absences, setAbsences] = useState<Absence[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -211,8 +212,8 @@ export function AbsencesPage() {
               className="trow"
               style={{ gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 0.9fr)' }}
             >
-              <div>{a.start_date}</div>
-              <div>{a.end_date}</div>
+              <div>{formatDateLocal(a.start_date, lang)}</div>
+              <div>{formatDateLocal(a.end_date, lang)}</div>
               <div>{a.reason.name}</div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                   <button className="secondary" disabled={loading} onClick={() => remove(a.id)}>
