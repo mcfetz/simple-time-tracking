@@ -25,7 +25,7 @@ export function AppShell() {
 
   return (
     <div className="shell">
-      <header className="header desktopOnly">
+      <header className="header">
         <div className="brand">
           <Link to="/" className="brandLink">
             <span className="brandIcon" aria-hidden="true">
