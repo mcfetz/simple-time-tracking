@@ -1,9 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import { useI18n } from '../lib/i18n'
 
 export function LoginPage() {
   const auth = useAuth()
+  const { t } = useI18n()
   const nav = useNavigate()
 
   const [flash, setFlash] = useState<string | null>(null)
@@ -43,33 +45,33 @@ export function LoginPage() {
           <div style={{ display: 'grid', gap: 2, justifyItems: 'center', textAlign: 'center' }}>
             <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: 0.3 }}>⏱  STT</div>
             <div className="muted" style={{ fontSize: 14 }}>
-              Simple Time Tracking
+              {t('app.name.long')}
             </div>
           </div>
           <p className="muted" style={{ margin: 0 }}>
-            Bitte anmelden.
+            {t('auth.login.title')}
           </p>
           {flash ? <div className="warn small">{flash}</div> : null}
         </div>
 
         <form onSubmit={onSubmit} style={{ display: 'grid', gap: 12, marginTop: 8 }}>
           <label>
-            E-Mail
+            {t('auth.login.email')}
             <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
           </label>
           <label>
-            Passwort
+            {t('auth.login.password')}
             <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required />
           </label>
 
           {error ? <div className="error">{error}</div> : null}
           <button type="submit" disabled={loading}>
-            {loading ? '...' : 'Login'}
+            {loading ? '...' : t('auth.login.submit')}
           </button>
         </form>
 
         <p className="muted" style={{ margin: 0 }}>
-          Kein Account? <Link to="/register">Registrieren</Link>
+          {t('auth.login.noAccount')} <Link to="/register">{t('auth.login.register')}</Link>
         </p>
       </div>
     </div>

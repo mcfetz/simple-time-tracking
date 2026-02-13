@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import { useI18n } from '../lib/i18n'
 
 export function RegisterPage() {
   const auth = useAuth()
+  const { t } = useI18n()
   const nav = useNavigate()
 
   const [email, setEmail] = useState('')
@@ -33,31 +35,31 @@ export function RegisterPage() {
           <div style={{ display: 'grid', gap: 2, justifyItems: 'center', textAlign: 'center' }}>
             <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: 0.3 }}>⏱  STT</div>
             <div className="muted" style={{ fontSize: 14 }}>
-              Simple Time Tracking
+              {t('app.name.long')}
             </div>
           </div>
           <p className="muted" style={{ margin: 0 }}>
-            Account erstellen.
+            {t('auth.register.title')}
           </p>
         </div>
 
         <form onSubmit={onSubmit} style={{ display: 'grid', gap: 12, marginTop: 8 }}>
           <label>
-            E-Mail
+            {t('auth.register.email')}
             <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
           </label>
           <label>
-            Passwort (min. 8 Zeichen)
+            {t('auth.register.password')}
             <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required minLength={8} />
           </label>
           {error ? <div className="error">{error}</div> : null}
           <button type="submit" disabled={loading}>
-            {loading ? '...' : 'Account erstellen'}
+            {loading ? '...' : t('auth.register.submit')}
           </button>
         </form>
 
         <p className="muted" style={{ margin: 0 }}>
-          Schon registriert? <Link to="/login">Zum Login</Link>
+          {t('auth.register.hasAccount')} <Link to="/login">{t('auth.register.toLogin')}</Link>
         </p>
       </div>
     </div>

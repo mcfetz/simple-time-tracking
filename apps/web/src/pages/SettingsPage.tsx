@@ -1,8 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { apiFetch } from '../lib/api'
 import type { UserSettings } from '../lib/types'
+import { useI18n, type Lang } from '../lib/i18n'
 
 export function SettingsPage() {
+  const i18n = useI18n()
   const [settings, setSettings] = useState<UserSettings | null>(null)
   const [dailyTargetMinutes, setDailyTargetMinutes] = useState<number>(468)
   const [homeOfficeRatio, setHomeOfficeRatio] = useState<number>(0.4)
@@ -56,6 +58,17 @@ export function SettingsPage() {
 
       {settings ? (
         <>
+          <section className="card">
+            <h2>Language</h2>
+            <label>
+              App language
+              <select value={i18n.lang} onChange={(e) => i18n.setLang(e.target.value as Lang)}>
+                <option value="en">English</option>
+                <option value="de">Deutsch</option>
+              </select>
+            </label>
+          </section>
+
           <form className="card" onSubmit={onSubmit}>
             <label>
               Sollarbeitszeit pro Tag (Minuten)

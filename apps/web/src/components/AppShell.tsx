@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import { useI18n } from '../lib/i18n'
 
 type Tab = {
   to: string
@@ -8,15 +9,16 @@ type Tab = {
 }
 
 const TABS: Tab[] = [
-  { to: '/', label: 'Heute', icon: '⌂' },
-  { to: '/history', label: 'History', icon: '⏱' },
-  { to: '/reports', label: 'Reports', icon: '▦' },
-  { to: '/absences', label: 'Abw.', icon: '✈' },
-  { to: '/settings', label: 'Settings', icon: '⚙' },
+  { to: '/', label: 'nav.today', icon: '⌂' },
+  { to: '/history', label: 'nav.history', icon: '⏱' },
+  { to: '/reports', label: 'nav.reports', icon: '▦' },
+  { to: '/absences', label: 'nav.absences', icon: '✈' },
+  { to: '/settings', label: 'nav.settings', icon: '⚙' },
 ]
 
 export function AppShell() {
   const auth = useAuth()
+  const { t } = useI18n()
 
   return (
     <div className="shell">
@@ -35,17 +37,17 @@ export function AppShell() {
       </main>
 
       <nav className="tabBar mobileOnly" aria-label="Navigation">
-        {TABS.map((t) => (
+        {TABS.map((tab) => (
           <NavLink
-            key={t.to}
-            to={t.to}
+            key={tab.to}
+            to={tab.to}
             className={({ isActive }) => `tabItem${isActive ? ' active' : ''}`}
-            end={t.to === '/'}
+            end={tab.to === '/'}
           >
             <span className="tabIcon" aria-hidden="true">
-              {t.icon}
+              {tab.icon}
             </span>
-            <span className="tabLabel">{t.label}</span>
+            <span className="tabLabel">{t(tab.label)}</span>
           </NavLink>
         ))}
       </nav>
