@@ -113,29 +113,26 @@ button:disabled {
   grid-template-columns: auto 1fr auto;
   gap: 16px;
   align-items: center;
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 40;
   padding: 12px var(--pad);
+  padding-top: calc(12px + env(safe-area-inset-top));
   border-bottom: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(12px);
 }
 
-@media (min-width: 900px) {
-  .header {
-    position: fixed;
-    left: 0;
-    right: 0;
-    top: 0;
-    z-index: 40;
-    padding-top: calc(12px + env(safe-area-inset-top));
-  }
+.main {
+  padding: var(--pad);
+  padding-top: calc(56px + var(--pad) + env(safe-area-inset-top));
+}
 
+@media (min-width: 900px) {
   .tabBar {
     display: none;
-  }
-
-  .main {
-    padding-top: calc(56px + var(--pad) + env(safe-area-inset-top));
-    padding-bottom: var(--pad);
   }
 }
 
@@ -251,10 +248,6 @@ button:disabled {
   gap: 10px;
 }
 
-.main {
-  padding: var(--pad);
-}
-
 .mainWithTabBar {
   padding-bottom: calc(16px + 64px + env(safe-area-inset-bottom));
 }
@@ -265,11 +258,6 @@ button:disabled {
   }
 }
 
-@media (min-width: 900px) {
-  .main {
-    padding-top: calc(var(--pad) + 56px + env(safe-area-inset-top));
-  }
-}
 
 .page {
   max-width: 980px;
