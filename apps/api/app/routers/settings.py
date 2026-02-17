@@ -33,6 +33,8 @@ def get_my_settings(
         overtime_start_date=settings.overtime_start_date.isoformat()
         if settings.overtime_start_date
         else None,
+        push_work_minutes=settings.push_work_minutes,
+        push_break_minutes=settings.push_break_minutes,
     )
 
 
@@ -57,6 +59,12 @@ def update_my_settings(
     if payload.overtime_start_date is not None:
         settings.overtime_start_date = payload.overtime_start_date
 
+    if payload.push_work_minutes is not None:
+        settings.push_work_minutes = payload.push_work_minutes
+
+    if payload.push_break_minutes is not None:
+        settings.push_break_minutes = payload.push_break_minutes
+
     db.commit()
     db.refresh(settings)
 
@@ -66,4 +74,6 @@ def update_my_settings(
         overtime_start_date=settings.overtime_start_date.isoformat()
         if settings.overtime_start_date
         else None,
+        push_work_minutes=settings.push_work_minutes,
+        push_break_minutes=settings.push_break_minutes,
     )

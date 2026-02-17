@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { apiFetch } from '../lib/api'
 import type { UserSettings } from '../lib/types'
 import { useI18n, type Lang } from '../lib/i18n'
+import { ensurePushPermission, getCurrentPushSubscription, isPushSupported, subscribeToPush, unsubscribeFromPush } from '../lib/push'
 
 export function SettingsPage() {
   const i18n = useI18n()
@@ -14,6 +15,11 @@ export function SettingsPage() {
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
 
+  const [pushSupported, setPushSupported] = useState(false)
+  const [pushEnabled, setPushEnabled] = useState(false)
+  const [pushWorkMinutes, setPushWorkMinutes] = useState('')
+  const [pushBreakMinutes, setPushBreakMinutes] = useState('')
+
   async function load() {
     setError(null)
     const data = await apiFetch<UserSettings>('/settings/me')
@@ -21,11 +27,58 @@ export function SettingsPage() {
     setDailyTargetMinutes(data.daily_target_minutes)
     setHomeOfficeRatio(data.home_office_target_ratio)
     setOvertimeStartDate(data.overtime_start_date ?? '')
+
+    setPushWorkMinutes((data.push_work_minutes ?? []).join(', '))
+    setPushBreakMinutes((data.push_break_minutes ?? []).join(', '))
+
+    const sub = await getCurrentPushSubscription()
+    setPushEnabled(Boolean(sub))
   }
 
   useEffect(() => {
+    setPushSupported(isPushSupported())
     load().catch((e) => setError((e as { message?: string })?.message || t('errors.generic')))
   }, [])
+
+  function parseMinuteList(raw: string): number[] {
+    const parts = raw
+      .split(',')
+      .map((x) => x.trim())
+      .filter(Boolean)
+
+    const nums: number[] = []
+    for (const p of parts) {
+      const n = Number(p)
+      if (!Number.isFinite(n)) continue
+      const i = Math.floor(n)
+      if (i <= 0) continue
+      nums.push(i)
+    }
+    return Array.from(new Set(nums)).sort((a, b) => a - b)
+  }
+
+  async function enablePush() {
+    setError(null)
+    if (!pushSupported) {
+      setError(t('errors.pushNotSupported'))
+      return
+    }
+
+    const perm = await ensurePushPermission()
+    if (perm !== 'granted') {
+      setError(t('errors.pushPermissionDenied'))
+      return
+    }
+
+    await subscribeToPush(i18n.lang)
+    setPushEnabled(true)
+  }
+
+  async function disablePush() {
+    setError(null)
+    await unsubscribeFromPush()
+    setPushEnabled(false)
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -39,6 +92,8 @@ export function SettingsPage() {
           daily_target_minutes: dailyTargetMinutes,
           home_office_target_ratio: homeOfficeRatio,
           overtime_start_date: overtimeStartDate ? overtimeStartDate : null,
+          push_work_minutes: parseMinuteList(pushWorkMinutes),
+          push_break_minutes: parseMinuteList(pushBreakMinutes),
         },
       })
       setSettings(data)
@@ -67,6 +122,30 @@ export function SettingsPage() {
                 <option value="en">English</option>
                 <option value="de">Deutsch</option>
               </select>
+            </label>
+          </section>
+
+          <section className="card">
+            <h2>{t('settings.pushNotifications')}</h2>
+            <div className="row">
+              <span className="muted">{pushEnabled ? t('settings.pushEnabled') : t('settings.pushDisabled')}</span>
+              {pushEnabled ? (
+                <button className="secondary" type="button" onClick={() => disablePush()}>
+                  {t('settings.pushDisable')}
+                </button>
+              ) : (
+                <button className="secondary" type="button" onClick={() => enablePush()}>
+                  {t('settings.pushEnable')}
+                </button>
+              )}
+            </div>
+            <label>
+              {t('settings.pushWorkMinutes')}
+              <input value={pushWorkMinutes} onChange={(e) => setPushWorkMinutes(e.target.value)} placeholder={t('settings.pushWorkMinutesHint')} />
+            </label>
+            <label>
+              {t('settings.pushBreakMinutes')}
+              <input value={pushBreakMinutes} onChange={(e) => setPushBreakMinutes(e.target.value)} placeholder={t('settings.pushBreakMinutesHint')} />
             </label>
           </section>
 

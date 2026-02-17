@@ -41,6 +41,9 @@ const EN: Dict = {
 
   'errors.generic': 'Error',
   'errors.offlineQueued': 'Offline: action queued',
+  'errors.pushNotSupported': 'Push notifications are not supported in this browser.',
+  'errors.pushPermissionDenied': 'Notification permission was denied.',
+  'errors.pushMissingVapidKey': 'Missing VAPID public key from backend.',
 
   'confirm.deleteEntry': 'Delete entry?',
   'confirm.deleteAbsence': 'Delete absence?',
@@ -121,6 +124,15 @@ const EN: Dict = {
   'settings.dailyTarget': 'Daily target (minutes)',
   'settings.homeOfficeTarget': 'Home-office target (0..1)',
   'settings.overtimeStart': 'Overtime start date',
+  'settings.pushNotifications': 'Push notifications',
+  'settings.pushEnable': 'Enable push',
+  'settings.pushDisable': 'Disable push',
+  'settings.pushWorkMinutes': 'Work thresholds (minutes)',
+  'settings.pushBreakMinutes': 'Break thresholds (minutes)',
+  'settings.pushWorkMinutesHint': 'Comma-separated, e.g. 30, 60, 120',
+  'settings.pushBreakMinutesHint': 'Comma-separated, e.g. 10, 20, 30',
+  'settings.pushEnabled': 'Enabled',
+  'settings.pushDisabled': 'Disabled',
   'settings.saved': 'Saved.',
 }
 
@@ -159,6 +171,9 @@ const DE: Dict = {
 
   'errors.generic': 'Fehler',
   'errors.offlineQueued': 'Offline: Aktion wurde in Queue gespeichert',
+  'errors.pushNotSupported': 'Push-Benachrichtigungen werden von diesem Browser nicht unterstützt.',
+  'errors.pushPermissionDenied': 'Benachrichtigungs-Berechtigung wurde abgelehnt.',
+  'errors.pushMissingVapidKey': 'Fehlender VAPID Public Key vom Backend.',
 
   'confirm.deleteEntry': 'Eintrag wirklich löschen?',
   'confirm.deleteAbsence': 'Abwesenheit wirklich löschen?',
@@ -240,6 +255,15 @@ const DE: Dict = {
   'settings.dailyTarget': 'Sollarbeitszeit pro Tag (Minuten)',
   'settings.homeOfficeTarget': 'Home-Office Ziel (0..1)',
   'settings.overtimeStart': 'Startdatum Stundenkonto',
+  'settings.pushNotifications': 'Push-Benachrichtigungen',
+  'settings.pushEnable': 'Push aktivieren',
+  'settings.pushDisable': 'Push deaktivieren',
+  'settings.pushWorkMinutes': 'Schwellen Arbeit (Minuten)',
+  'settings.pushBreakMinutes': 'Schwellen Pause (Minuten)',
+  'settings.pushWorkMinutesHint': 'Kommagetrennt, z.B. 30, 60, 120',
+  'settings.pushBreakMinutesHint': 'Kommagetrennt, z.B. 10, 20, 30',
+  'settings.pushEnabled': 'Aktiv',
+  'settings.pushDisabled': 'Inaktiv',
   'settings.saved': 'Gespeichert.',
 }
 

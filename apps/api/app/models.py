@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, UTC
 
-from sqlalchemy import Date, DateTime, Float, ForeignKey, Index, Integer, String
+from sqlalchemy import Date, DateTime, Float, ForeignKey, Index, Integer, JSON, String
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -40,6 +40,11 @@ class User(Base):
         cascade="all, delete-orphan",
     )
 
+    push_subscriptions: Mapped[list[PushSubscription]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
 
 class UserSettings(Base):
     __tablename__ = "user_settings"
@@ -51,6 +56,9 @@ class UserSettings(Base):
     home_office_target_ratio: Mapped[float] = mapped_column(Float, default=0.4)
 
     overtime_start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+
+    push_work_minutes: Mapped[list[int] | None] = mapped_column(JSON, nullable=True)
+    push_break_minutes: Mapped[list[int] | None] = mapped_column(JSON, nullable=True)
 
     user: Mapped[User] = relationship(back_populates="settings")
 
@@ -77,6 +85,58 @@ class AuthSession(Base):
     )
 
     user: Mapped[User] = relationship(back_populates="sessions")
+
+
+class PushSubscription(Base):
+    __tablename__ = "push_subscriptions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+
+    endpoint: Mapped[str] = mapped_column(String(2048), unique=True)
+    p256dh: Mapped[str] = mapped_column(String(512))
+    auth: Mapped[str] = mapped_column(String(256))
+    lang: Mapped[str] = mapped_column(String(8), default="en")
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    last_seen_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    user: Mapped[User] = relationship(back_populates="push_subscriptions")
+    logs: Mapped[list[PushNotificationLog]] = relationship(
+        back_populates="subscription",
+        cascade="all, delete-orphan",
+    )
+
+
+class PushNotificationLog(Base):
+    __tablename__ = "push_notification_logs"
+
+    __table_args__ = (
+        Index(
+            "uq_push_notification_log_subscription_date_kind_threshold",
+            "subscription_id",
+            "date_local",
+            "kind",
+            "threshold_minutes",
+            unique=True,
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    subscription_id: Mapped[int] = mapped_column(
+        ForeignKey("push_subscriptions.id", ondelete="CASCADE"), index=True
+    )
+
+    date_local: Mapped[date] = mapped_column(Date, index=True)
+    kind: Mapped[str] = mapped_column(String(8))
+    threshold_minutes: Mapped[int] = mapped_column(Integer)
+    sent_at_utc: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    subscription: Mapped[PushSubscription] = relationship(back_populates="logs")
 
 
 class ClockEventType(str):

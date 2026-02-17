@@ -112,11 +112,36 @@ class UserSettingsResponse(BaseModel):
     home_office_target_ratio: float
     overtime_start_date: str | None = None
 
+    push_work_minutes: list[int] | None = None
+    push_break_minutes: list[int] | None = None
+
 
 class UpdateUserSettingsRequest(BaseModel):
     daily_target_minutes: int | None = Field(default=None, ge=0, le=24 * 60)
     home_office_target_ratio: float | None = Field(default=None, ge=0.0, le=1.0)
     overtime_start_date: date | None = None
+
+    push_work_minutes: list[int] | None = None
+    push_break_minutes: list[int] | None = None
+
+
+class PushSubscriptionKeys(BaseModel):
+    p256dh: str
+    auth: str
+
+
+class PushSubscriptionRequest(BaseModel):
+    endpoint: str
+    keys: PushSubscriptionKeys
+    lang: str | None = None
+
+
+class PushUnsubscribeRequest(BaseModel):
+    endpoint: str
+
+
+class VapidPublicKeyResponse(BaseModel):
+    public_key: str
 
 
 class ReportDay(BaseModel):

@@ -21,5 +21,9 @@ class Settings(BaseSettings):
     cookie_secure: bool = False
     cookie_samesite: Literal["lax", "strict", "none"] = "lax"
 
+    vapid_public_key: str = ""
+    vapid_private_key: str = ""
+    vapid_subject: str = "mailto:admin@example.com"
+
 
 settings = Settings()

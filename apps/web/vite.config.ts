@@ -10,9 +10,12 @@ export default defineConfig({
   },
   plugins: [
     react(),
-      VitePWA({
+    VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'robots.txt'],
+      workbox: {
+        importScripts: ['push-sw.js'],
+      },
         manifest: {
           name: 'Simple Time Tracking',
           short_name: 'STT',

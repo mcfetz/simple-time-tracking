@@ -43,6 +43,9 @@ export type UserSettings = {
   daily_target_minutes: number
   home_office_target_ratio: number
   overtime_start_date?: string | null
+
+  push_work_minutes?: number[] | null
+  push_break_minutes?: number[] | null
 }
 
 export type CreateClockEventRequest = {
