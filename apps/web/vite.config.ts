@@ -12,6 +12,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      devOptions: {
+        enabled: true,
+        type: 'module',
+      },
       includeAssets: ['favicon.svg', 'robots.txt'],
       workbox: {
         importScripts: ['push-sw.js'],
