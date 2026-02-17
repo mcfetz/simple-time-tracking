@@ -80,6 +80,22 @@ export function SettingsPage() {
     setPushEnabled(false)
   }
 
+  async function testPush() {
+    setError(null)
+    const sub = await getCurrentPushSubscription()
+    if (!sub) {
+      setPushEnabled(false)
+      return
+    }
+
+    await apiFetch('/push/test', {
+      method: 'POST',
+      body: {
+        endpoint: sub.endpoint,
+      },
+    })
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setSaved(false)
@@ -129,15 +145,22 @@ export function SettingsPage() {
             <h2>{t('settings.pushNotifications')}</h2>
             <div className="row">
               <span className="muted">{pushEnabled ? t('settings.pushEnabled') : t('settings.pushDisabled')}</span>
-              {pushEnabled ? (
-                <button className="secondary" type="button" onClick={() => disablePush()}>
-                  {t('settings.pushDisable')}
-                </button>
-              ) : (
-                <button className="secondary" type="button" onClick={() => enablePush()}>
-                  {t('settings.pushEnable')}
-                </button>
-              )}
+              <div style={{ display: 'flex', gap: 8 }}>
+                {pushEnabled ? (
+                  <>
+                    <button className="secondary" type="button" onClick={() => testPush()}>
+                      {t('settings.pushTest')}
+                    </button>
+                    <button className="secondary" type="button" onClick={() => disablePush()}>
+                      {t('settings.pushDisable')}
+                    </button>
+                  </>
+                ) : (
+                  <button className="secondary" type="button" onClick={() => enablePush()}>
+                    {t('settings.pushEnable')}
+                  </button>
+                )}
+              </div>
             </div>
             <label>
               {t('settings.pushWorkMinutes')}

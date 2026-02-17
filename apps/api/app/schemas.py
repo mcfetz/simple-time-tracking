@@ -140,6 +140,10 @@ class PushUnsubscribeRequest(BaseModel):
     endpoint: str
 
 
+class PushTestRequest(BaseModel):
+    endpoint: str
+
+
 class VapidPublicKeyResponse(BaseModel):
     public_key: str
 
