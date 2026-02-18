@@ -5,9 +5,15 @@ from sqlalchemy import engine_from_config, pool
 
 import app.models as models
 from app.db import Base
+from app.settings import settings
 
 
 config = context.config
+
+config.set_main_option(
+    "sqlalchemy.url",
+    f"sqlite+pysqlite:///{settings.sqlite_path}",
+)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
