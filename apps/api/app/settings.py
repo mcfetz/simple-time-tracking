@@ -25,5 +25,15 @@ class Settings(BaseSettings):
     vapid_private_key: str = ""
     vapid_subject: str = "mailto:admin@example.com"
 
+    smtp_host: str = ""
+    smtp_port: int = 25
+    smtp_from: str = ""
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_starttls: bool = False
+    smtp_use_tls: bool = False
+
+    public_app_url: str = ""
+
 
 settings = Settings()

@@ -181,3 +181,24 @@ docker compose --profile push up --build
 ```
 
 The `push-worker` service uses the same env vars and the same SQLite database volume.
+
+## Password reset (email)
+
+STT includes an email-based password reset flow:
+
+- Login page → “Forgot password?”
+- Request reset link via email
+- Open link and set a new password
+
+Backend configuration (environment variables):
+
+- `TT_PUBLIC_APP_URL` (required): Base URL of the web app, used to build the reset link
+- `TT_SMTP_HOST` / `TT_SMTP_PORT` / `TT_SMTP_FROM` (required)
+- `TT_SMTP_USER` / `TT_SMTP_PASSWORD` (optional auth)
+- `TT_SMTP_STARTTLS` (optional, default false)
+- `TT_SMTP_USE_TLS` (optional SMTPS, default false)
+
+Notes:
+
+- Default is **plain SMTP** (no TLS). Enable STARTTLS/SMTPS via flags if needed.
+- If `TT_SMTP_USER` is set, `TT_SMTP_PASSWORD` must also be set.

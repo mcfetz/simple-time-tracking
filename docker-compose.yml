@@ -30,6 +30,15 @@ services:
       TT_VAPID_PUBLIC_KEY: ${TT_VAPID_PUBLIC_KEY:-}
       TT_VAPID_PRIVATE_KEY: ${TT_VAPID_PRIVATE_KEY:-}
       TT_VAPID_SUBJECT: ${TT_VAPID_SUBJECT:-mailto:admin@example.com}
+
+      TT_PUBLIC_APP_URL: ${TT_PUBLIC_APP_URL:-}
+      TT_SMTP_HOST: ${TT_SMTP_HOST:-}
+      TT_SMTP_PORT: ${TT_SMTP_PORT:-25}
+      TT_SMTP_FROM: ${TT_SMTP_FROM:-}
+      TT_SMTP_USER: ${TT_SMTP_USER:-}
+      TT_SMTP_PASSWORD: ${TT_SMTP_PASSWORD:-}
+      TT_SMTP_STARTTLS: ${TT_SMTP_STARTTLS:-false}
+      TT_SMTP_USE_TLS: ${TT_SMTP_USE_TLS:-false}
     volumes:
       - stt-data:/data
     ports:
@@ -55,6 +64,15 @@ services:
       TT_VAPID_PUBLIC_KEY: ${TT_VAPID_PUBLIC_KEY:-}
       TT_VAPID_PRIVATE_KEY: ${TT_VAPID_PRIVATE_KEY:-}
       TT_VAPID_SUBJECT: ${TT_VAPID_SUBJECT:-mailto:admin@example.com}
+
+      TT_PUBLIC_APP_URL: ${TT_PUBLIC_APP_URL:-}
+      TT_SMTP_HOST: ${TT_SMTP_HOST:-}
+      TT_SMTP_PORT: ${TT_SMTP_PORT:-25}
+      TT_SMTP_FROM: ${TT_SMTP_FROM:-}
+      TT_SMTP_USER: ${TT_SMTP_USER:-}
+      TT_SMTP_PASSWORD: ${TT_SMTP_PASSWORD:-}
+      TT_SMTP_STARTTLS: ${TT_SMTP_STARTTLS:-false}
+      TT_SMTP_USE_TLS: ${TT_SMTP_USE_TLS:-false}
     volumes:
       - stt-data:/data
     command: ["bash", "-lc", "uv run python -m app.push_worker"]

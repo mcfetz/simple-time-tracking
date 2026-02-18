@@ -25,6 +25,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
+    token_version: Mapped[int] = mapped_column(Integer, default=0)
     timezone: Mapped[str] = mapped_column(String(64), default="Europe/Berlin")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now
@@ -137,6 +138,20 @@ class PushNotificationLog(Base):
     sent_at_utc: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
     subscription: Mapped[PushSubscription] = relationship(back_populates="logs")
+
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class ClockEventType(str):

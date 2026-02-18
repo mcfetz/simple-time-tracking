@@ -46,11 +46,12 @@ def verify_password(password: str, password_hash: str) -> bool:
         return False
 
 
-def create_access_token(*, user_id: int) -> str:
+def create_access_token(*, user_id: int, token_version: int) -> str:
     now = datetime.now(UTC)
     exp = now + timedelta(minutes=settings.access_token_minutes)
     payload = {
         "sub": str(user_id),
+        "tv": token_version,
         "iat": int(now.timestamp()),
         "exp": int(exp.timestamp()),
     }
@@ -82,7 +83,7 @@ def create_auth_session(
     return session
 
 
-def decode_access_token(token: str) -> int:
+def decode_access_token(token: str) -> tuple[int, int]:
     try:
         payload = jwt.decode(
             token,
@@ -102,8 +103,15 @@ def decode_access_token(token: str) -> int:
             detail="Invalid access token",
         )
 
+    token_version_raw = payload.get("tv")
+    if token_version_raw is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid access token",
+        )
+
     try:
-        return int(sub)
+        return int(sub), int(token_version_raw)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -121,9 +129,15 @@ def get_current_user(
             detail="Not authenticated",
         )
 
-    user_id = decode_access_token(credentials.credentials)
+    user_id, token_version = decode_access_token(credentials.credentials)
     user = db.get(User, user_id)
     if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
+
+    if user.token_version != token_version:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",

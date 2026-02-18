@@ -89,6 +89,9 @@ export function LoginPage() {
         <p className="muted" style={{ margin: 0 }}>
           {t('auth.login.noAccount')} <Link to="/register">{t('auth.login.register')}</Link>
         </p>
+        <p className="muted" style={{ margin: 0 }}>
+          <Link to="/forgot-password">{t('auth.login.forgotPassword')}</Link>
+        </p>
       </div>
     </div>
   )

@@ -22,6 +22,7 @@ const EN: Dict = {
   'auth.login.submit': 'Login',
   'auth.login.noAccount': 'No account?',
   'auth.login.register': 'Register',
+  'auth.login.forgotPassword': 'Forgot password?',
 
   'auth.register.title': 'Create account.',
   'auth.register.email': 'Email',
@@ -29,6 +30,17 @@ const EN: Dict = {
   'auth.register.submit': 'Create account',
   'auth.register.hasAccount': 'Already registered?',
   'auth.register.toLogin': 'Go to login',
+
+  'auth.reset.request.title': 'Reset password',
+  'auth.reset.request.hint': 'Enter your email. If an account exists, you will receive a reset link.',
+  'auth.reset.request.submit': 'Send reset link',
+  'auth.reset.request.done': 'If the account exists, an email was sent.',
+
+  'auth.reset.confirm.title': 'Set new password',
+  'auth.reset.confirm.password': 'New password (min. 8 chars)',
+  'auth.reset.confirm.submit': 'Set password',
+  'auth.reset.confirm.missingToken': 'Missing reset token.',
+  'auth.reset.confirm.done': 'Password updated. Please sign in.',
 
   'common.close': 'Close',
 
@@ -154,6 +166,7 @@ const DE: Dict = {
   'auth.login.submit': 'Login',
   'auth.login.noAccount': 'Kein Account?',
   'auth.login.register': 'Registrieren',
+  'auth.login.forgotPassword': 'Passwort vergessen?',
 
   'auth.register.title': 'Account erstellen.',
   'auth.register.email': 'E-Mail',
@@ -161,6 +174,17 @@ const DE: Dict = {
   'auth.register.submit': 'Account erstellen',
   'auth.register.hasAccount': 'Schon registriert?',
   'auth.register.toLogin': 'Zum Login',
+
+  'auth.reset.request.title': 'Passwort zurücksetzen',
+  'auth.reset.request.hint': 'E-Mail eingeben. Wenn ein Account existiert, erhältst du einen Link.',
+  'auth.reset.request.submit': 'Link senden',
+  'auth.reset.request.done': 'Wenn ein Account existiert, wurde eine E-Mail gesendet.',
+
+  'auth.reset.confirm.title': 'Neues Passwort setzen',
+  'auth.reset.confirm.password': 'Neues Passwort (min. 8 Zeichen)',
+  'auth.reset.confirm.submit': 'Passwort setzen',
+  'auth.reset.confirm.missingToken': 'Reset-Token fehlt.',
+  'auth.reset.confirm.done': 'Passwort geändert. Bitte erneut anmelden.',
 
   'common.close': 'Schließen',
 

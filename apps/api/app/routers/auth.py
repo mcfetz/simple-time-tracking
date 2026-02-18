@@ -11,6 +11,8 @@ from app.models import AbsenceReason, User, UserSettings, utc_now
 from app.schemas import (
     AuthResponse,
     LoginRequest,
+    PasswordResetConfirmRequest,
+    PasswordResetRequest,
     RegisterRequest,
     TokenResponse,
     UserPublic,
@@ -25,6 +27,9 @@ from app.security import (
     rotate_auth_session,
     verify_password,
 )
+from app.password_reset import expires_at, generate_reset_token, hash_reset_token
+from app.email import send_email
+from app.models import AuthSession, PasswordResetToken
 from app.settings import settings
 
 
@@ -75,7 +80,9 @@ def register(
     create_auth_session(db=db, user_id=user.id, refresh_token=refresh)
     _set_refresh_cookie(response=response, refresh_token=refresh)
 
-    token = TokenResponse(access_token=create_access_token(user_id=user.id))
+    token = TokenResponse(
+        access_token=create_access_token(user_id=user.id, token_version=user.token_version)
+    )
     return AuthResponse(
         token=token,
         user=UserPublic(id=user.id, email=user.email, timezone=user.timezone),
@@ -95,7 +102,9 @@ def login(payload: LoginRequest, response: Response, db: Session = Depends(get_d
     create_auth_session(db=db, user_id=user.id, refresh_token=refresh)
     _set_refresh_cookie(response=response, refresh_token=refresh)
 
-    token = TokenResponse(access_token=create_access_token(user_id=user.id))
+    token = TokenResponse(
+        access_token=create_access_token(user_id=user.id, token_version=user.token_version)
+    )
     return AuthResponse(
         token=token,
         user=UserPublic(id=user.id, email=user.email, timezone=user.timezone),
@@ -130,7 +139,9 @@ def refresh(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
         )
 
-    token = TokenResponse(access_token=create_access_token(user_id=user.id))
+    token = TokenResponse(
+        access_token=create_access_token(user_id=user.id, token_version=user.token_version)
+    )
     return AuthResponse(
         token=token,
         user=UserPublic(id=user.id, email=user.email, timezone=user.timezone),
@@ -159,3 +170,77 @@ def me(current_user: User = Depends(get_current_user)):
         email=current_user.email,
         timezone=current_user.timezone,
     )
+
+
+@router.post("/password-reset/request")
+def request_password_reset(payload: PasswordResetRequest, db: Session = Depends(get_db)):
+    email = payload.email.lower().strip()
+    if not email:
+        return {"status": "ok"}
+
+    user = db.scalar(select(User).where(User.email == email))
+    if user is None:
+        return {"status": "ok"}
+
+    if not settings.public_app_url:
+        raise HTTPException(status_code=500, detail="Password reset not configured")
+
+    token = generate_reset_token()
+    token_hash = hash_reset_token(token)
+
+    row = PasswordResetToken(
+        user_id=user.id,
+        token_hash=token_hash,
+        created_at=utc_now(),
+        expires_at=expires_at(60),
+    )
+    db.add(row)
+    db.commit()
+
+    url = settings.public_app_url.rstrip("/") + f"/reset-password?token={token}"
+    send_email(
+        to=user.email,
+        subject="STT password reset",
+        body_text=f"Open this link to reset your password: {url}",
+    )
+
+    return {"status": "ok"}
+
+
+@router.post("/password-reset/confirm")
+def confirm_password_reset(
+    payload: PasswordResetConfirmRequest, db: Session = Depends(get_db)
+):
+    token = payload.token.strip()
+    if not token:
+        raise HTTPException(status_code=400, detail="Invalid token")
+
+    token_hash = hash_reset_token(token)
+    row = db.scalar(select(PasswordResetToken).where(PasswordResetToken.token_hash == token_hash))
+    if row is None:
+        raise HTTPException(status_code=400, detail="Invalid token")
+
+    if row.used_at is not None:
+        raise HTTPException(status_code=400, detail="Invalid token")
+    if utc_now() >= row.expires_at:
+        raise HTTPException(status_code=400, detail="Token expired")
+
+    user = db.get(User, row.user_id)
+    if user is None:
+        raise HTTPException(status_code=400, detail="Invalid token")
+
+    if len(payload.new_password) < 8:
+        raise HTTPException(status_code=400, detail="Password too short")
+
+    user.password_hash = hash_password(payload.new_password)
+    user.token_version += 1
+
+    stmt = select(AuthSession).where(AuthSession.user_id == user.id)
+    sessions = list(db.scalars(stmt).all())
+    now = utc_now()
+    for s in sessions:
+        s.revoked_at = now
+    row.used_at = utc_now()
+    db.commit()
+
+    return {"status": "ok"}

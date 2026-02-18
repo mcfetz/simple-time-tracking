@@ -212,6 +212,15 @@ class UserPublic(BaseModel):
 
 class TokenResponse(BaseModel):
     access_token: str
+
+
+class PasswordResetRequest(BaseModel):
+    email: str
+
+
+class PasswordResetConfirmRequest(BaseModel):
+    token: str
+    new_password: str
     token_type: str = "bearer"
 
 
