@@ -24,13 +24,16 @@ def send_email(*, to: str, subject: str, body_text: str) -> None:
         server = smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10)
 
     try:
+        server.ehlo()
         if settings.smtp_starttls and not settings.smtp_use_tls:
             server.starttls()
+            server.ehlo()
 
         if settings.smtp_user:
             if not settings.smtp_password:
                 raise RuntimeError("SMTP auth requires password")
-            server.login(settings.smtp_user, settings.smtp_password)
+            if server.has_extn("auth"):
+                server.login(settings.smtp_user, settings.smtp_password)
 
         server.send_message(msg)
     finally:
