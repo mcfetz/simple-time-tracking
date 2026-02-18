@@ -70,8 +70,13 @@ export function SettingsPage() {
       return
     }
 
-    await subscribeToPush(i18n.lang)
-    setPushEnabled(true)
+    try {
+      await subscribeToPush(i18n.lang)
+      setPushEnabled(true)
+    } catch (e) {
+      const msg = (e as { message?: string })?.message
+      setError(t(msg || 'errors.generic'))
+    }
   }
 
   async function disablePush() {

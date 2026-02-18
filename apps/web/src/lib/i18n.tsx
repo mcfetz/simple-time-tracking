@@ -44,6 +44,7 @@ const EN: Dict = {
   'errors.pushNotSupported': 'Push notifications are not supported in this browser.',
   'errors.pushPermissionDenied': 'Notification permission was denied.',
   'errors.pushMissingVapidKey': 'Missing VAPID public key from backend.',
+  'errors.pushNoServiceWorker': 'Service worker not ready. Reload the page and try again.',
 
   'confirm.deleteEntry': 'Delete entry?',
   'confirm.deleteAbsence': 'Delete absence?',
@@ -175,6 +176,7 @@ const DE: Dict = {
   'errors.pushNotSupported': 'Push-Benachrichtigungen werden von diesem Browser nicht unterstützt.',
   'errors.pushPermissionDenied': 'Benachrichtigungs-Berechtigung wurde abgelehnt.',
   'errors.pushMissingVapidKey': 'Fehlender VAPID Public Key vom Backend.',
+  'errors.pushNoServiceWorker': 'Service Worker ist nicht bereit. Bitte Seite neu laden und erneut versuchen.',
 
   'confirm.deleteEntry': 'Eintrag wirklich löschen?',
   'confirm.deleteAbsence': 'Abwesenheit wirklich löschen?',

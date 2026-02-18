@@ -37,7 +37,11 @@ export async function subscribeToPush(lang: Lang): Promise<void> {
   const publicKey = keyResp.public_key
   if (!publicKey) throw new Error('errors.pushMissingVapidKey')
 
-  const reg = await navigator.serviceWorker.ready
+  const readyPromise = navigator.serviceWorker.ready
+  const timeoutPromise = new Promise<ServiceWorkerRegistration>((_resolve, reject) => {
+    window.setTimeout(() => reject(new Error('errors.pushNoServiceWorker')), 4000)
+  })
+  const reg = await Promise.race([readyPromise, timeoutPromise])
   const sub = await reg.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: urlBase64ToUint8Array(publicKey),
