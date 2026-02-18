@@ -2,6 +2,8 @@
 
 STT is a mobile-first time tracking **PWA** (Progressive Web App) for tracking work time and breaks.
 
+![screenshot stt dashboard](assets/stt-dashboard.png)
+
 It is built as a small, self-hostable stack:
 
 - **Backend**: FastAPI + SQLAlchemy + SQLite (+ Alembic migrations)
