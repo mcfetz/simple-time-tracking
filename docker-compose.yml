@@ -1,0 +1,68 @@
+services:
+  web:
+    build:
+      context: ./apps/web
+      args:
+        VITE_API_BASE_URL: /api
+    ports:
+      - "5173:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost/"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ./apps/api
+    environment:
+      TT_ENV: ${TT_ENV:-prod}
+      TT_BASE_URL: ${TT_BASE_URL:-http://localhost:5173}
+      TT_SQLITE_PATH: ${TT_SQLITE_PATH:-/data/app.db}
+      TT_JWT_SECRET_KEY: ${TT_JWT_SECRET_KEY:-change-me}
+      TT_COOKIE_SECURE: ${TT_COOKIE_SECURE:-false}
+      TT_COOKIE_SAMESITE: ${TT_COOKIE_SAMESITE:-lax}
+
+      TT_VAPID_PUBLIC_KEY: ${TT_VAPID_PUBLIC_KEY:-}
+      TT_VAPID_PRIVATE_KEY: ${TT_VAPID_PRIVATE_KEY:-}
+      TT_VAPID_SUBJECT: ${TT_VAPID_SUBJECT:-mailto:admin@example.com}
+    volumes:
+      - stt-data:/data
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()" ]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+
+  push-worker:
+    build:
+      context: ./apps/api
+    environment:
+      TT_ENV: ${TT_ENV:-prod}
+      TT_BASE_URL: ${TT_BASE_URL:-http://localhost:5173}
+      TT_SQLITE_PATH: ${TT_SQLITE_PATH:-/data/app.db}
+      TT_JWT_SECRET_KEY: ${TT_JWT_SECRET_KEY:-change-me}
+      TT_COOKIE_SECURE: ${TT_COOKIE_SECURE:-false}
+      TT_COOKIE_SAMESITE: ${TT_COOKIE_SAMESITE:-lax}
+
+      TT_VAPID_PUBLIC_KEY: ${TT_VAPID_PUBLIC_KEY:-}
+      TT_VAPID_PRIVATE_KEY: ${TT_VAPID_PRIVATE_KEY:-}
+      TT_VAPID_SUBJECT: ${TT_VAPID_SUBJECT:-mailto:admin@example.com}
+    volumes:
+      - stt-data:/data
+    command: ["bash", "-lc", "uv run python -m app.push_worker"]
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles: ["push"]
+
+volumes:
+  stt-data:
