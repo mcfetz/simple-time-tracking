@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import User, UserSettings
+from app.models import AuthSession, User, UserSettings, utc_now
 from app.schemas import UpdateUserSettingsRequest, UserSettingsResponse
 from app.security import get_current_user
 
@@ -77,3 +78,24 @@ def update_my_settings(
         push_work_minutes=settings.push_work_minutes,
         push_break_minutes=settings.push_break_minutes,
     )
+
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+def delete_my_account(
+    response: Response,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    sessions = list(
+        db.scalars(select(AuthSession).where(AuthSession.user_id == current_user.id)).all()
+    )
+    now = utc_now()
+    for s in sessions:
+        s.revoked_at = now
+
+    user = db.get(User, current_user.id)
+    if user is not None:
+        db.delete(user)
+    db.commit()
+
+    response.delete_cookie(key="tt_refresh", path="/auth")

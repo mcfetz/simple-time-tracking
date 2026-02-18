@@ -147,6 +147,9 @@ const EN: Dict = {
   'settings.pushBreakMinutesHint': 'Comma-separated, e.g. 10, 20, 30',
   'settings.pushEnabled': 'Enabled',
   'settings.pushDisabled': 'Disabled',
+  'settings.deleteAccount': 'Delete account',
+  'confirm.deleteAccount1': 'Do you really want to delete your account?',
+  'confirm.deleteAccount2': 'This is irreversible. Delete now?',
   'settings.saved': 'Saved.',
 }
 
@@ -292,6 +295,9 @@ const DE: Dict = {
   'settings.pushBreakMinutesHint': 'Kommagetrennt, z.B. 10, 20, 30',
   'settings.pushEnabled': 'Aktiv',
   'settings.pushDisabled': 'Inaktiv',
+  'settings.deleteAccount': 'Konto löschen',
+  'confirm.deleteAccount1': 'Willst du dein Konto wirklich löschen?',
+  'confirm.deleteAccount2': 'Das ist endgültig und kann nicht rückgängig gemacht werden. Jetzt löschen?',
   'settings.saved': 'Gespeichert.',
 }
 

@@ -3,10 +3,14 @@ import { apiFetch } from '../lib/api'
 import type { UserSettings } from '../lib/types'
 import { useI18n, type Lang } from '../lib/i18n'
 import { ensurePushPermission, getCurrentPushSubscription, isPushSupported, subscribeToPush, unsubscribeFromPush } from '../lib/push'
+import { useAuth } from '../lib/auth'
+import { useNavigate } from 'react-router-dom'
 
 export function SettingsPage() {
   const i18n = useI18n()
   const { t } = i18n
+  const auth = useAuth()
+  const nav = useNavigate()
   const [settings, setSettings] = useState<UserSettings | null>(null)
   const [dailyTargetMinutes, setDailyTargetMinutes] = useState<number>(468)
   const [homeOfficeRatio, setHomeOfficeRatio] = useState<number>(0.4)
@@ -126,6 +130,21 @@ export function SettingsPage() {
     }
   }
 
+  async function deleteAccount() {
+    if (!confirm(t('confirm.deleteAccount1'))) return
+    if (!confirm(t('confirm.deleteAccount2'))) return
+
+    setError(null)
+    setLoading(true)
+    try {
+      await apiFetch('/settings/me', { method: 'DELETE' })
+    } finally {
+      await auth.logout()
+      nav('/login')
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="page">
       <h1 style={{ margin: 0 }}>{t('settings.title')}</h1>
@@ -216,6 +235,13 @@ export function SettingsPage() {
 
             {saved ? <div className="ok">{t('settings.saved')}</div> : null}
           </form>
+
+          <section className="card">
+            <h2 style={{ marginTop: 0 }}>{t('settings.deleteAccount')}</h2>
+            <button type="button" disabled={loading} onClick={() => deleteAccount()} style={{ borderColor: 'rgba(239, 68, 68, 0.35)', color: '#991b1b' }}>
+              {t('settings.deleteAccount')}
+            </button>
+          </section>
 
         </>
       ) : null}
