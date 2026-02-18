@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import AbsenceReason, User, UserSettings, utc_now
+from app.models import AbsenceReason, User, UserSettings, utc_datetime, utc_now
 from app.schemas import (
     AuthResponse,
     LoginRequest,
@@ -222,7 +222,7 @@ def confirm_password_reset(
 
     if row.used_at is not None:
         raise HTTPException(status_code=400, detail="Invalid token")
-    if utc_now() >= row.expires_at:
+    if utc_now() >= utc_datetime(row.expires_at):
         raise HTTPException(status_code=400, detail="Token expired")
 
     user = db.get(User, row.user_id)
