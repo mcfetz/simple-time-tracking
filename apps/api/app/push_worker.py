@@ -12,6 +12,27 @@ from app.reporting import compute_day_summary
 from app.settings import settings
 
 
+def _format_duration(*, minutes: int, lang: str) -> str:
+    if minutes < 60:
+        return (
+            f"{minutes} minutes" if lang == "en" else f"{minutes} Minuten"
+        )
+
+    h = minutes // 60
+    m = minutes % 60
+
+    if lang == "en":
+        if m == 0:
+            return f"{h} hour" if h == 1 else f"{h} hours"
+        h_part = f"{h} hour" if h == 1 else f"{h} hours"
+        return f"{h_part}, {m} minute" if m == 1 else f"{h_part}, {m} minutes"
+
+    if m == 0:
+        return f"{h} Stunde" if h == 1 else f"{h} Stunden"
+    h_part = f"{h} Stunde" if h == 1 else f"{h} Stunden"
+    return f"{h_part}, {m} Minute" if m == 1 else f"{h_part}, {m} Minuten"
+
+
 def _thresholds(value: list[int] | None) -> list[int]:
     if not value:
         return []
@@ -97,17 +118,19 @@ def _send_due_for_subscription(
 
         if kind == "WORK":
             title = "STT"
+            amount = _format_duration(minutes=total_minutes, lang=subscription.lang)
             body = (
-                f"You have worked {total_minutes} minutes so far."
+                f"You have worked {amount} so far."
                 if subscription.lang == "en"
-                else f"Du hast bis jetzt {total_minutes} Minuten gearbeitet."
+                else f"Du hast bis jetzt {amount} gearbeitet."
             )
         else:
             title = "STT"
+            amount = _format_duration(minutes=total_minutes, lang=subscription.lang)
             body = (
-                f"You have taken {total_minutes} minutes break so far."
+                f"You have taken {amount} break so far."
                 if subscription.lang == "en"
-                else f"Du hast bis jetzt {total_minutes} Minuten Pause gemacht."
+                else f"Du hast bis jetzt {amount} Pause gemacht."
             )
 
         payload = {
