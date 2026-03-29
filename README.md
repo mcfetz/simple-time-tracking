@@ -21,10 +21,23 @@ It is built as a small, self-hostable stack:
 - **Offline-friendly**: PWA installable
 - **(Optional) Web Push notifications**: per-user thresholds for work/break minutes
 
-## Repo layout
+## Project Structure
 
-- `backend`: FastAPI backend
-- `frontend`: Vite + React frontend
+```
+simple-time-tracking/
+├── backend/          # FastAPI backend (Python)
+│   ├── app/          # Main application code
+│   ├── alembic/      # Database migrations
+│   └── pyproject.toml
+├── frontend/         # Vite + React frontend (TypeScript)
+│   ├── src/          # Source code
+│   └── package.json
+├── Dockerfile        # Single-container build
+└── docker-compose.yml # Multi-container setup
+```
+
+- `backend`: FastAPI backend with SQLAlchemy ORM
+- `frontend`: Vite + React frontend with PWA support
 
 ## Requirements
 
@@ -32,7 +45,28 @@ It is built as a small, self-hostable stack:
 - Node.js **18+** (frontend)
 - `uv` for Python dependency management
 
-## Run locally
+## Quick Start (Local Development)
+
+**Prerequisites:** Python 3.11+, Node.js 18+, `uv` (Python package manager)
+
+```bash
+# 1. Terminal - Backend
+cd backend
+uv run alembic upgrade head
+uv run uvicorn app.main:app --reload
+
+# 2. Terminal - Frontend
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
+```
+
+Then open http://localhost:5173
+
+---
+
+## Run locally (Detailed)
 
 ### 1) Backend (API)
 
@@ -134,13 +168,13 @@ Note:
 
 ## Run with Docker
 
-### Single Container (Simplest)
+### Option 1: Use Pre-built Image (Recommended)
 
-For a quick single-container deployment with everything included:
+Pre-built images are available on GitHub Container Registry:
 
 ```bash
-# Build the image
-docker build -t simple-time-tracking .
+# Pull the latest image
+docker pull ghcr.io/daniel/simple-time-tracking:latest
 
 # Run with required environment variables
 docker run -d \
@@ -155,10 +189,28 @@ docker run -d \
   -e TT_SMTP_USER=your-email@gmail.com \
   -e TT_SMTP_PASSWORD=your-app-password \
   -e TT_SMTP_STARTTLS=true \
-  simple-time-tracking
+  ghcr.io/daniel/simple-time-tracking:latest
 ```
 
 The app will be available at `http://localhost:5000`.
+
+### Option 2: Build Locally
+
+If you prefer to build the image yourself:
+
+```bash
+# Build the image
+docker build -t simple-time-tracking .
+
+# Run (same command as above, but with your local image name)
+docker run -d \
+  --name stt \
+  -p 5000:5000 \
+  -v stt-data:/app/data \
+  -e TT_JWT_SECRET_KEY=your-secure-secret-key \
+  -e TT_PUBLIC_APP_URL=http://localhost:5000 \
+  simple-time-tracking
+```
 
 **Required environment variables:**
 - `TT_JWT_SECRET_KEY` - Secret key for JWT token signing (change this!)
