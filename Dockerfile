@@ -34,7 +34,9 @@ RUN pip install --no-cache-dir \
     gunicorn
 
 # Copy backend source
-COPY backend /app/backend
+COPY backend/app /app/app
+COPY backend/alembic /app/alembic
+COPY backend/alembic.ini /app/alembic.ini
 
 # Copy frontend build
 COPY --from=frontend-builder /app/frontend/dist /app/frontend_dist
@@ -68,11 +70,10 @@ EXPOSE 5000
 RUN echo '#!/bin/sh\n\
 set -e\n\
 echo "Running database migrations..."\n\
-cd /app/backend\n\
+cd /app\n\
 alembic upgrade head\n\
 echo "Starting backend..."\n\
-cd /app\n\
-exec gunicorn -w 4 -b 0.0.0.0:5000 -k uvicorn.workers.UvicornWorker "backend.app.main:app"\n\
+exec gunicorn -w 4 -b 0.0.0.0:5000 -k uvicorn.workers.UvicornWorker "app.main:app"\n\
 ' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 CMD ["/app/entrypoint.sh"]
