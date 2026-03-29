@@ -7,12 +7,12 @@ import type { ClockEvent } from '../lib/types'
 import { NoteModal } from '../components/NoteModal'
 import { IconPencil, IconTrash } from '../components/icons'
 import { useI18n } from '../lib/i18n'
-import { formatDateLocal, formatTime, localIsoDateFromUtc } from '../lib/format'
+import { formatDateLocal, formatTimeLocal, localIsoDateFromUtc, parseLocalDateTime } from '../lib/format'
 import { useSearchParams } from 'react-router-dom'
 
 type EditState = {
   id: number
-  ts_utc: string
+  ts_local: string
   type: ClockEvent['type']
   location: ClockEvent['location']
 }
@@ -116,7 +116,7 @@ export function HistoryPage() {
   }
 
   function startEdit(e: ClockEvent) {
-    setEdit({ id: e.id, ts_utc: e.ts_utc, type: e.type, location: e.location })
+    setEdit({ id: e.id, ts_local: formatTimeLocal(e.ts_utc), type: e.type, location: e.location })
   }
 
   async function submitEdit(ev: FormEvent) {
@@ -125,8 +125,13 @@ export function HistoryPage() {
     setLoading(true)
     setError(null)
     try {
+      const localDate = parseLocalDateTime(edit.ts_local)
+      if (!localDate) {
+        throw new Error('Invalid date format. Use: YYYY-MM-DD HH:MM:SS')
+      }
+
       const body: Record<string, unknown> = {
-        ts_utc: new Date(edit.ts_utc).toISOString(),
+        ts_utc: localDate.toISOString(),
         type: edit.type,
       }
       if (edit.type === 'COME') {
@@ -219,8 +224,8 @@ export function HistoryPage() {
           </div>
 
           <label>
-            {t('history.timeUtc')}
-            <input value={edit.ts_utc} onChange={(e) => setEdit({ ...edit, ts_utc: e.target.value })} />
+            {t('history.time')}
+            <input value={edit.ts_local} onChange={(e) => setEdit({ ...edit, ts_local: e.target.value })} placeholder="YYYY-MM-DD HH:MM:SS" />
           </label>
           <label>
             {t('history.type')}
@@ -260,7 +265,7 @@ export function HistoryPage() {
           </div>
 
           <div className="thead" style={{ gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr)' }}>
-            <div>{t('history.timeUtc')}</div>
+            <div>{t('history.time')}</div>
             <div>{t('history.type')}</div>
             <div>{t('history.location')}</div>
             <div>{t('history.actions')}</div>
@@ -272,7 +277,7 @@ export function HistoryPage() {
               style={{ gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr)' }}
             >
               <div>
-                {formatTime(e.ts_utc, tz)}
+                {formatTimeLocal(e.ts_utc)}
               </div>
               <div>{e.type}</div>
               <div className="muted">{e.location ?? '-'}</div>

@@ -23,8 +23,8 @@ It is built as a small, self-hostable stack:
 
 ## Repo layout
 
-- `apps/api`: FastAPI backend
-- `apps/web`: Vite + React frontend
+- `backend`: FastAPI backend
+- `frontend`: Vite + React frontend
 
 ## Requirements
 
@@ -37,7 +37,7 @@ It is built as a small, self-hostable stack:
 ### 1) Backend (API)
 
 ```bash
-cd apps/api
+cd backend
 
 # create/update local sqlite db
 uv run alembic upgrade head
@@ -50,7 +50,7 @@ The API will run on `http://localhost:8000`.
 
 #### Backend config
 
-Copy and edit `apps/api/.env.example` → `apps/api/.env`.
+Copy and edit `backend/.env.example` → `backend/.env`.
 
 Important variables:
 
@@ -61,7 +61,7 @@ Important variables:
 ### 2) Frontend (Web)
 
 ```bash
-cd apps/web
+cd frontend
 npm install
 
 # configure API base url
@@ -74,7 +74,7 @@ The frontend will run on `http://localhost:5173`.
 
 #### Frontend config
 
-`apps/web/.env`:
+`frontend/.env`:
 
 ```env
 VITE_API_BASE_URL=http://localhost:8000
@@ -97,11 +97,11 @@ When a threshold is reached, the backend worker sends a push message like:
 Generate VAPID keys (example using `py-vapid`):
 
 ```bash
-cd apps/api
+cd backend
 uv run python -c "from py_vapid import Vapid; v=Vapid(); v.generate_keys(); print(v.public_key); print(v.private_key)"
 ```
 
-Add them to `apps/api/.env`:
+Add them to `backend/.env`:
 
 ```env
 TT_VAPID_PUBLIC_KEY=...
@@ -114,7 +114,7 @@ TT_VAPID_SUBJECT=mailto:admin@example.com
 The push sender runs as a separate process:
 
 ```bash
-cd apps/api
+cd backend
 uv run python -m app.push_worker
 ```
 
@@ -129,12 +129,53 @@ Note:
 
 ## More docs
 
-- Backend: `apps/api/README.md`
-- Frontend: `apps/web/README.md`
+- Backend: `backend/README.md`
+- Frontend: `frontend/README.md`
 
-## Run with Docker (recommended)
+## Run with Docker
 
-This repository includes a `docker-compose.yml` that starts:
+### Single Container (Simplest)
+
+For a quick single-container deployment with everything included:
+
+```bash
+# Build the image
+docker build -t simple-time-tracking .
+
+# Run with required environment variables
+docker run -d \
+  --name stt \
+  -p 5000:5000 \
+  -v stt-data:/app/data \
+  -e TT_JWT_SECRET_KEY=your-secure-secret-key \
+  -e TT_PUBLIC_APP_URL=http://localhost:5000 \
+  -e TT_SMTP_HOST=smtp.gmail.com \
+  -e TT_SMTP_PORT=587 \
+  -e TT_SMTP_FROM=your-email@gmail.com \
+  -e TT_SMTP_USER=your-email@gmail.com \
+  -e TT_SMTP_PASSWORD=your-app-password \
+  -e TT_SMTP_STARTTLS=true \
+  simple-time-tracking
+```
+
+The app will be available at `http://localhost:5000`.
+
+**Required environment variables:**
+- `TT_JWT_SECRET_KEY` - Secret key for JWT token signing (change this!)
+- `TT_PUBLIC_APP_URL` - Your app's public URL (used for password reset links)
+- `TT_SMTP_HOST`, `TT_SMTP_PORT`, `TT_SMTP_FROM` - SMTP settings for password reset emails
+
+**Optional environment variables:**
+- `TT_SMTP_USER`, `TT_SMTP_PASSWORD` - SMTP authentication
+- `TT_SMTP_STARTTLS` - Use STARTTLS (default: false)
+- `TT_SMTP_USE_TLS` - Use SMTPS (default: false)
+- `TT_VAPID_PUBLIC_KEY`, `TT_VAPID_PRIVATE_KEY`, `TT_VAPID_SUBJECT` - For Web Push notifications
+- `TT_BASE_URL` - Frontend origin for CORS (default: http://localhost:5000)
+- `TT_SQLITE_PATH` - Database path (default: /app/data/app.db)
+
+### Docker Compose (Multi-Container)
+
+This repository also includes a `docker-compose.yml` that starts:
 
 - `web` (nginx serving the built PWA)
 - `api` (FastAPI backend)
@@ -150,7 +191,7 @@ cp .env.docker.example .env
 
 Notes:
 
-- All backend settings that are normally read from `apps/api/.env` can be supplied via **Docker environment variables**.
+- All backend settings that are normally read from `backend/.env` can be supplied via **Docker environment variables**.
 - SQLite is stored in a named Docker volume (`stt-data`).
 
 ### 2) Start

@@ -69,6 +69,45 @@ export function formatTime(isoUtc: string, tz: string): string {
   return `${get('hour')}:${get('minute')}:${get('second')}`
 }
 
+export function formatTimeLocal(isoUtc: string): string {
+  const d = new Date(isoUtc)
+  if (Number.isNaN(d.getTime())) return isoUtc
+
+  const yyyy = d.getFullYear()
+  const mm = pad2(d.getMonth() + 1)
+  const dd = pad2(d.getDate())
+  const hh = pad2(d.getHours())
+  const mi = pad2(d.getMinutes())
+  const ss = pad2(d.getSeconds())
+
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`
+}
+
+export function parseLocalDateTime(localStr: string): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})[\sT](\d{2}):(\d{2}):(\d{2})$/.exec(localStr.trim())
+  if (!m) return null
+
+  const y = Number(m[1])
+  const mo = Number(m[2]) - 1
+  const d = Number(m[3])
+  const h = Number(m[4])
+  const mi = Number(m[5])
+  const s = Number(m[6])
+
+  const dt = new Date(y, mo, d, h, mi, s)
+  if (
+    dt.getFullYear() !== y ||
+    dt.getMonth() !== mo ||
+    dt.getDate() !== d ||
+    dt.getHours() !== h ||
+    dt.getMinutes() !== mi ||
+    dt.getSeconds() !== s
+  ) {
+    return null
+  }
+  return dt
+}
+
 export function localIsoDateFromUtc(isoUtc: string, tz: string): string {
   const d = new Date(isoUtc)
   if (Number.isNaN(d.getTime())) return isoUtc

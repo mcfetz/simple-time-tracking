@@ -35,5 +35,7 @@ class Settings(BaseSettings):
 
     public_app_url: str = ""
 
+    frontend_dir: str = ""
+
 
 settings = Settings()

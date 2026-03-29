@@ -5,7 +5,7 @@ This is the frontend for **STT — Simple Time Tracking**.
 ## Local dev
 
 ```bash
-cd apps/web
+cd frontend
 npm install
 
 cp .env.example .env
@@ -14,7 +14,7 @@ npm run dev
 
 ### Config
 
-`apps/web/.env`:
+`frontend/.env`:
 
 ```env
 VITE_API_BASE_URL=http://localhost:8000
@@ -23,7 +23,7 @@ VITE_API_BASE_URL=http://localhost:8000
 ## Build
 
 ```bash
-cd apps/web
+cd frontend
 npm run build
 npm run preview
 ```
