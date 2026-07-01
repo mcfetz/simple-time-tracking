@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { apiFetch, getAccessToken, resetAuthExpiredSignal, setAccessToken } from './api'
 import type { Lang } from './i18n'
 import type { AuthResponse } from './types'
@@ -21,16 +21,45 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-export function AuthProvider(props: { children: React.ReactNode }) {
+function getStoredItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function setStoredItem(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+  }
+}
+
+function removeStoredItem(key: string) {
+  try {
+    localStorage.removeItem(key)
+  } catch {
+  }
+}
+
+function setSessionItem(key: string, value: string) {
+  try {
+    sessionStorage.setItem(key, value)
+  } catch {
+  }
+}
+
+export function AuthProvider(props: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ status: 'loading' })
 
   function markExpiredAndLogout() {
-    const lang = (localStorage.getItem(LANG_KEY) as Lang | null) || 'en'
-    sessionStorage.setItem(
+    const lang = (getStoredItem(LANG_KEY) as Lang | null) || 'en'
+    setSessionItem(
       'tt_flash',
       lang === 'de' ? 'Session abgelaufen. Bitte erneut anmelden.' : 'Session expired. Please sign in again.',
     )
-    localStorage.removeItem(USER_CACHE_KEY)
+    removeStoredItem(USER_CACHE_KEY)
     setAccessToken(null)
     setState({ status: 'anonymous' })
   }
@@ -42,7 +71,7 @@ export function AuthProvider(props: { children: React.ReactNode }) {
         try {
           const me = await apiFetch<AuthResponse['user']>('/auth/me', { method: 'GET', retryOn401: false })
           resetAuthExpiredSignal()
-          localStorage.setItem(USER_CACHE_KEY, JSON.stringify(me))
+          setStoredItem(USER_CACHE_KEY, JSON.stringify(me))
           setState({ status: 'authenticated', user: me })
           return
         } catch {
@@ -52,21 +81,21 @@ export function AuthProvider(props: { children: React.ReactNode }) {
       const data = await apiFetch<AuthResponse>('/auth/refresh', { method: 'POST', retryOn401: false })
       resetAuthExpiredSignal()
       setAccessToken(data.token.access_token)
-      localStorage.setItem(USER_CACHE_KEY, JSON.stringify(data.user))
+      setStoredItem(USER_CACHE_KEY, JSON.stringify(data.user))
       setState({ status: 'authenticated', user: data.user })
     } catch (e) {
       if ((e as { status?: number })?.status === 401) {
         markExpiredAndLogout()
         return
       }
-      const cached = localStorage.getItem(USER_CACHE_KEY)
+      const cached = getStoredItem(USER_CACHE_KEY)
       if (cached) {
         try {
           const user = JSON.parse(cached) as AuthResponse['user']
           setState({ status: 'authenticated', user })
           return
         } catch {
-          localStorage.removeItem(USER_CACHE_KEY)
+          removeStoredItem(USER_CACHE_KEY)
         }
       }
 
@@ -79,7 +108,7 @@ export function AuthProvider(props: { children: React.ReactNode }) {
     const data = await apiFetch<AuthResponse>('/auth/login', { method: 'POST', body: { email, password }, retryOn401: false })
     resetAuthExpiredSignal()
     setAccessToken(data.token.access_token)
-    localStorage.setItem(USER_CACHE_KEY, JSON.stringify(data.user))
+    setStoredItem(USER_CACHE_KEY, JSON.stringify(data.user))
     setState({ status: 'authenticated', user: data.user })
   }
 
@@ -87,7 +116,7 @@ export function AuthProvider(props: { children: React.ReactNode }) {
     const data = await apiFetch<AuthResponse>('/auth/register', { method: 'POST', body: { email, password }, retryOn401: false })
     resetAuthExpiredSignal()
     setAccessToken(data.token.access_token)
-    localStorage.setItem(USER_CACHE_KEY, JSON.stringify(data.user))
+    setStoredItem(USER_CACHE_KEY, JSON.stringify(data.user))
     setState({ status: 'authenticated', user: data.user })
   }
 
@@ -95,14 +124,17 @@ export function AuthProvider(props: { children: React.ReactNode }) {
     try {
       await apiFetch<void>('/auth/logout', { method: 'POST', retryOn401: false })
     } finally {
-      localStorage.removeItem(USER_CACHE_KEY)
+      removeStoredItem(USER_CACHE_KEY)
       setAccessToken(null)
       setState({ status: 'anonymous' })
     }
   }
 
   useEffect(() => {
-    refresh()
+    refresh().catch(() => {
+      setAccessToken(null)
+      setState({ status: 'anonymous' })
+    })
   }, [])
 
   useEffect(() => {

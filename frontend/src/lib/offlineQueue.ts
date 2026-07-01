@@ -1,4 +1,4 @@
-import { openDB, type DBSchema } from 'idb'
+import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
 import { apiFetch } from './api'
 import type { CreateClockEventRequest } from './types'
 
@@ -18,36 +18,48 @@ interface TimeTrackingDB extends DBSchema {
   }
 }
 
-const dbPromise = openDB<TimeTrackingDB>('time-tracking', 1, {
-  upgrade(db) {
-    const store = db.createObjectStore('clock_event_queue', { keyPath: 'id' })
-    store.createIndex('by-created', 'created_at_ms')
-  },
-})
-
 const listeners = new Set<QueueListener>()
+let dbPromise: Promise<IDBPDatabase<TimeTrackingDB> | null> | null = null
+
+function getDb(): Promise<IDBPDatabase<TimeTrackingDB> | null> {
+  if (!dbPromise) {
+    dbPromise = openDB<TimeTrackingDB>('time-tracking', 1, {
+      upgrade(db) {
+        const hasStore = db.objectStoreNames.contains('clock_event_queue')
+        if (!hasStore) {
+          const store = db.createObjectStore('clock_event_queue', { keyPath: 'id' })
+          store.createIndex('by-created', 'created_at_ms')
+        }
+      },
+    }).catch(() => null)
+  }
+
+  return dbPromise
+}
 
 async function emitCount() {
-  const db = await dbPromise
-  const count = await db.count('clock_event_queue')
+  const db = await getDb()
+  const count = db ? await db.count('clock_event_queue') : 0
   for (const l of listeners) l(count)
 }
 
 export function subscribeQueueCount(listener: QueueListener) {
   listeners.add(listener)
-  emitCount()
+  emitCount().catch(() => undefined)
   return () => {
     listeners.delete(listener)
   }
 }
 
 export async function getQueueCount(): Promise<number> {
-  const db = await dbPromise
+  const db = await getDb()
+  if (!db) return 0
   return db.count('clock_event_queue')
 }
 
 export async function enqueueClockEvent(payload: CreateClockEventRequest): Promise<void> {
-  const db = await dbPromise
+  const db = await getDb()
+  if (!db) return
 
   const ts = new Date().toISOString()
   const id = payload.client_event_id ?? crypto.randomUUID()
@@ -66,7 +78,8 @@ export async function enqueueClockEvent(payload: CreateClockEventRequest): Promi
 }
 
 export async function flushClockEventQueue(): Promise<{ sent: number; remaining: number }> {
-  const db = await dbPromise
+  const db = await getDb()
+  if (!db) return { sent: 0, remaining: 0 }
 
   let sent = 0
 
