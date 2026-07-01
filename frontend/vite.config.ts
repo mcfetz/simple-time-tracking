@@ -21,13 +21,15 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       devOptions: {
         enabled: true,
         type: 'module',
       },
       includeAssets: ['favicon.svg', 'robots.txt'],
       workbox: {
+        cleanupOutdatedCaches: true,
+        navigateFallback: '/index.html',
         importScripts: ['push-sw.js'],
       },
         manifest: {

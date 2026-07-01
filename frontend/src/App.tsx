@@ -3,6 +3,7 @@ import { AppShell } from './components/AppShell'
 import { RequireAuth } from './components/RequireAuth'
 import { useAuth } from './lib/auth'
 import { useI18n } from './lib/i18n'
+import { PwaUpdatePrompt } from './components/PwaUpdatePrompt'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -18,11 +19,18 @@ export default function App() {
   const { t } = useI18n()
 
   if (auth.state.status === 'loading') {
-    return <div className="page">{t('common.loading')}</div>
+    return (
+      <>
+        <PwaUpdatePrompt />
+        <div className="page">{t('common.loading')}</div>
+      </>
+    )
   }
 
   return (
-    <Routes>
+    <>
+      <PwaUpdatePrompt />
+      <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -44,6 +52,7 @@ export default function App() {
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+    </>
   )
 }
