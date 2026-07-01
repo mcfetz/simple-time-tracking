@@ -1,18 +1,19 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEventHandler, type RefObject } from 'react'
 
-import { apiFetch } from '../lib/api'
-import { useAuth } from '../lib/auth'
-import { deleteDayNote, getDayNote, upsertDayNote } from '../lib/notes'
-import type { ClockEvent } from '../lib/types'
 import { NoteModal } from '../components/NoteModal'
 import { IconPencil, IconTrash } from '../components/icons'
+import { apiFetch } from '../lib/api'
+import { useAuth } from '../lib/auth'
+import { formatDateLocal, formatTimeLocal, localIsoDateFromUtc } from '../lib/format'
 import { useI18n } from '../lib/i18n'
-import { formatDateLocal, formatTimeLocal, localIsoDateFromUtc, parseLocalDateTime } from '../lib/format'
+import { deleteDayNote, getDayNote, upsertDayNote } from '../lib/notes'
+import type { ClockEvent } from '../lib/types'
 import { useSearchParams } from 'react-router-dom'
 
 type EditState = {
   id: number
-  ts_local: string
+  date: string
+  time: string
   type: ClockEvent['type']
   location: ClockEvent['location']
 }
@@ -24,6 +25,139 @@ type DayGroup = {
 
 function formatLocalDate(tsUtc: string, tz: string): string {
   return localIsoDateFromUtc(tsUtc, tz)
+}
+
+function pad(value: number): string {
+  return String(value).padStart(2, '0')
+}
+
+function toLocalEditParts(tsUtc: string): Pick<EditState, 'date' | 'time'> {
+  const date = new Date(tsUtc)
+  return {
+    date: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
+    time: `${pad(date.getHours())}:${pad(date.getMinutes())}`,
+  }
+}
+
+function toLocalDateTime(date: string, time: string): Date | null {
+  if (!date || !time) return null
+  const localDate = new Date(`${date}T${time}`)
+  if (Number.isNaN(localDate.getTime())) return null
+  return localDate
+}
+
+function supportsPicker(input: HTMLInputElement | null): input is HTMLInputElement & { showPicker: () => void } {
+  return !!input && typeof (input as HTMLInputElement & { showPicker?: () => void }).showPicker === 'function'
+}
+
+type EditEventModalProps = {
+  edit: EditState
+  loading: boolean
+  onCancel: () => void
+  onChange: (next: EditState) => void
+  onSubmit: FormEventHandler<HTMLFormElement>
+  t: (key: string) => string
+}
+
+function EditEventModal({ edit, loading, onCancel, onChange, onSubmit, t }: EditEventModalProps) {
+  const dateInputRef = useRef<HTMLInputElement | null>(null)
+  const timeInputRef = useRef<HTMLInputElement | null>(null)
+  const preview = toLocalDateTime(edit.date, edit.time)
+
+  function openPicker(ref: RefObject<HTMLInputElement | null>) {
+    const input = ref.current
+    if (!input) return
+    input.focus()
+    if (supportsPicker(input)) input.showPicker()
+  }
+
+  return (
+    <div className="modalOverlay" onMouseDown={onCancel}>
+      <div className="modal editEntryModal" onMouseDown={(e) => e.stopPropagation()}>
+        <form className="editEntryForm" onSubmit={onSubmit}>
+          <div className="row">
+            <div>
+              <strong>{t('history.editEntry')}</strong>
+              <div className="muted small">{t('history.editPickerHint')}</div>
+            </div>
+            <button className="secondary" type="button" onClick={onCancel}>
+              {t('common.cancel')}
+            </button>
+          </div>
+
+          <div className="editEntryPickerGrid">
+            <label className="editEntryPickerLabel">
+              <span>{t('history.date')}</span>
+              <button className="secondary editEntryPickerButton" type="button" onClick={() => openPicker(dateInputRef)}>
+                <span className="editEntryPickerValue">{edit.date || 'YYYY-MM-DD'}</span>
+                <span className="muted small">{t('history.date')}</span>
+              </button>
+              <input
+                ref={dateInputRef}
+                className="editEntryNativePicker"
+                type="date"
+                value={edit.date}
+                onChange={(e) => onChange({ ...edit, date: e.target.value })}
+                required
+              />
+            </label>
+
+            <label className="editEntryPickerLabel">
+              <span>{t('history.time')}</span>
+              <button className="secondary editEntryPickerButton" type="button" onClick={() => openPicker(timeInputRef)}>
+                <span className="editEntryPickerValue">{edit.time || '--:--'}</span>
+                <span className="muted small">{t('history.timeOfDay')}</span>
+              </button>
+              <input
+                ref={timeInputRef}
+                className="editEntryNativePicker"
+                type="time"
+                value={edit.time}
+                onChange={(e) => onChange({ ...edit, time: e.target.value })}
+                step={60}
+                required
+              />
+            </label>
+          </div>
+
+          <div className="editEntryPreview">
+            <span className="muted small">{t('history.selectedTime')}</span>
+            <strong>{preview ? `${edit.date} ${edit.time}` : '—'}</strong>
+          </div>
+
+          <label>
+            {t('history.type')}
+            <select value={edit.type} onChange={(e) => onChange({ ...edit, type: e.target.value as EditState['type'] })}>
+              <option value="COME">COME</option>
+              <option value="GO">GO</option>
+              <option value="BREAK_START">BREAK_START</option>
+              <option value="BREAK_END">BREAK_END</option>
+            </select>
+          </label>
+
+          {edit.type === 'COME' ? (
+            <label>
+              {t('history.location')}
+              <select
+                value={edit.location ?? 'OFFICE'}
+                onChange={(e) => onChange({ ...edit, location: e.target.value as EditState['location'] })}
+              >
+                <option value="OFFICE">OFFICE</option>
+                <option value="HOME">HOME</option>
+              </select>
+            </label>
+          ) : null}
+
+          <div className="row" style={{ marginTop: 4 }}>
+            <span className="muted small">{t('history.mobilePickerHint')}</span>
+            <button type="submit" disabled={loading}>
+              {loading ? t('common.loading') : t('common.save')}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
 }
 
 export function HistoryPage() {
@@ -116,18 +250,19 @@ export function HistoryPage() {
   }
 
   function startEdit(e: ClockEvent) {
-    setEdit({ id: e.id, ts_local: formatTimeLocal(e.ts_utc), type: e.type, location: e.location })
+    const next = toLocalEditParts(e.ts_utc)
+    setEdit({ id: e.id, date: next.date, time: next.time, type: e.type, location: e.location })
   }
 
-  async function submitEdit(ev: FormEvent) {
+  const submitEdit: FormEventHandler<HTMLFormElement> = async (ev) => {
     ev.preventDefault()
     if (!edit) return
     setLoading(true)
     setError(null)
     try {
-      const localDate = parseLocalDateTime(edit.ts_local)
+      const localDate = toLocalDateTime(edit.date, edit.time)
       if (!localDate) {
-        throw new Error('Invalid date format. Use: YYYY-MM-DD HH:MM:SS')
+        throw new Error(t('history.invalidDateTime'))
       }
 
       const body: Record<string, unknown> = {
@@ -214,46 +349,7 @@ export function HistoryPage() {
 
       {error ? <div className="error">{error}</div> : null}
 
-      {edit ? (
-        <form className="card" onSubmit={submitEdit}>
-          <div className="row">
-            <strong>{t('history.editEntry')}</strong>
-            <button className="secondary" type="button" onClick={() => setEdit(null)}>
-              {t('common.cancel')}
-            </button>
-          </div>
-
-          <label>
-            {t('history.time')}
-            <input value={edit.ts_local} onChange={(e) => setEdit({ ...edit, ts_local: e.target.value })} placeholder="YYYY-MM-DD HH:MM:SS" />
-          </label>
-          <label>
-            {t('history.type')}
-            <select value={edit.type} onChange={(e) => setEdit({ ...edit, type: e.target.value as EditState['type'] })}>
-              <option value="COME">COME</option>
-              <option value="GO">GO</option>
-              <option value="BREAK_START">BREAK_START</option>
-              <option value="BREAK_END">BREAK_END</option>
-            </select>
-          </label>
-          {edit.type === 'COME' ? (
-            <label>
-              {t('history.location')}
-              <select
-                value={edit.location ?? 'OFFICE'}
-                onChange={(e) => setEdit({ ...edit, location: e.target.value as EditState['location'] })}
-              >
-                <option value="OFFICE">OFFICE</option>
-                <option value="HOME">HOME</option>
-              </select>
-            </label>
-          ) : null}
-
-          <button type="submit" disabled={loading}>
-            {loading ? t('common.loading') : t('common.save')}
-          </button>
-        </form>
-      ) : null}
+      {edit ? <EditEventModal edit={edit} loading={loading} onCancel={() => setEdit(null)} onChange={setEdit} onSubmit={submitEdit} t={t} /> : null}
 
       {grouped.map((g) => (
         <section key={g.date_local} className="card">

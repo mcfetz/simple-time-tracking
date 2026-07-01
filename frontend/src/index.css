@@ -502,3 +502,93 @@ button.linkButton:hover {
   border: 0;
   border-radius: 0;
 }
+
+.editEntryModal {
+  width: min(560px, 100%);
+}
+
+.editEntryForm {
+  display: grid;
+  gap: 14px;
+}
+
+.editEntryPickerGrid {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .editEntryPickerGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.editEntryPickerLabel {
+  display: grid;
+  gap: 8px;
+}
+
+.editEntryPickerButton {
+  width: 100%;
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  padding: 14px;
+  text-align: left;
+}
+
+.editEntryPickerValue {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.editEntryNativePicker {
+  min-height: 46px;
+}
+
+.editEntryPreview {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+
+.pwaUpdateBanner {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(76px + env(safe-area-inset-bottom));
+  z-index: 70;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(250, 204, 21, 0.28);
+  border-radius: var(--radius);
+  background: rgba(255, 251, 235, 0.96);
+  box-shadow: var(--shadow);
+}
+
+.pwaUpdateBannerBody {
+  display: grid;
+  gap: 4px;
+  color: #92400e;
+}
+
+.pwaUpdateBannerActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 900px) {
+  .pwaUpdateBanner {
+    left: auto;
+    right: 16px;
+    bottom: 16px;
+    width: min(420px, calc(100vw - 32px));
+  }
+}

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 
 export type Lang = 'en' | 'de'
 
@@ -50,6 +50,9 @@ const EN: Dict = {
   'common.delete': 'Delete',
   'common.cancel': 'Cancel',
   'common.note': 'Note',
+  'pwa.updateTitle': 'Update available',
+  'pwa.updateBody': 'A new version of the app is ready. Reload to switch to the fresh build.',
+  'pwa.updateAction': 'Reload now',
 
   'errors.generic': 'Error',
   'errors.offlineQueued': 'Offline: action queued',
@@ -112,6 +115,12 @@ const EN: Dict = {
   'history.actions': 'Actions',
   'history.edit': 'Edit',
   'history.delete': 'Delete',
+  'history.date': 'Date',
+  'history.timeOfDay': 'Time of day',
+  'history.selectedTime': 'Selected time',
+  'history.editPickerHint': 'Use the calendar and time picker instead of typing manually.',
+  'history.mobilePickerHint': 'On mobile, the browser can open a calendar modal and time wheel here.',
+  'history.invalidDateTime': 'Invalid date or time selection',
 
   'absences.title': 'Absences',
   'absences.new': 'New',
@@ -197,6 +206,9 @@ const DE: Dict = {
   'common.delete': 'Löschen',
   'common.cancel': 'Abbrechen',
   'common.note': 'Notiz',
+  'pwa.updateTitle': 'Update verfügbar',
+  'pwa.updateBody': 'Eine neue App-Version ist bereit. Mit Neuladen wechselst du auf den frischen Stand.',
+  'pwa.updateAction': 'Jetzt neu laden',
 
   'errors.generic': 'Fehler',
   'errors.offlineQueued': 'Offline: Aktion wurde in Queue gespeichert',
@@ -259,6 +271,12 @@ const DE: Dict = {
   'history.actions': 'Aktionen',
   'history.edit': 'Bearbeiten',
   'history.delete': 'Löschen',
+  'history.date': 'Datum',
+  'history.timeOfDay': 'Uhrzeit',
+  'history.selectedTime': 'Ausgewählte Zeit',
+  'history.editPickerHint': 'Bitte Kalender und Zeitpicker verwenden statt die Zeit manuell einzutippen.',
+  'history.mobilePickerHint': 'Auf Mobilgeräten kann der Browser hier einen Kalenderdialog und ein Zeitrad öffnen.',
+  'history.invalidDateTime': 'Ungültige Datums- oder Zeitauswahl',
 
   'absences.title': 'Abwesenheiten',
   'absences.new': 'Neu',
@@ -302,12 +320,20 @@ const DE: Dict = {
 }
 
 function detectInitialLang(): Lang {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored === 'de' || stored === 'en') return stored
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored === 'de' || stored === 'en') return stored
+  } catch {
+  }
 
   const navLang = (navigator.language || 'en').toLowerCase()
   const initial: Lang = navLang.startsWith('de') ? 'de' : 'en'
-  localStorage.setItem(STORAGE_KEY, initial)
+
+  try {
+    localStorage.setItem(STORAGE_KEY, initial)
+  } catch {
+  }
+
   return initial
 }
 
@@ -319,7 +345,7 @@ type I18nContextValue = {
 
 const I18nContext = createContext<I18nContextValue | null>(null)
 
-export function I18nProvider(props: { children: React.ReactNode }) {
+export function I18nProvider(props: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => detectInitialLang())
 
   const dict = lang === 'de' ? DE : EN
@@ -329,7 +355,10 @@ export function I18nProvider(props: { children: React.ReactNode }) {
   }, [dict])
 
   const setLang = (next: Lang) => {
-    localStorage.setItem(STORAGE_KEY, next)
+    try {
+      localStorage.setItem(STORAGE_KEY, next)
+    } catch {
+    }
     setLangState(next)
   }
 
