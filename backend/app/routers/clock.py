@@ -10,7 +10,7 @@ from sqlalchemy import desc, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.clock_validation import validate_event_fields, validate_sequence
+from app.clock_validation import validate_event_fields
 from app.db import get_db
 from app.models import ClockEvent, User, utc_now
 from app.schemas import (
@@ -58,58 +58,6 @@ def _last_event(db: Session, user_id: int) -> ClockEvent | None:
     return db.scalar(stmt)
 
 
-def _enforce_transition(last: ClockEvent | None, next_type: str) -> None:
-    if last is None:
-        if next_type != "COME":
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail="First event must be COME"
-            )
-        return
-
-    last_type = last.type
-    if last_type == "COME":
-        if next_type in ("COME", "BREAK_END"):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail="Invalid transition"
-            )
-        return
-
-    if last_type == "BREAK_START":
-        if next_type not in ("BREAK_END", "GO"):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail="Invalid transition"
-            )
-        return
-
-    if last_type == "BREAK_END":
-        if next_type in ("BREAK_END",):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail="Invalid transition"
-            )
-        if next_type == "GO":
-            return
-        if next_type == "BREAK_START":
-            return
-        if next_type == "COME":
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail="Already working"
-            )
-
-    if last_type == "GO" and next_type != "COME":
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="Invalid transition"
-        )
-
-
-def _load_user_events(db: Session, user_id: int) -> list[ClockEvent]:
-    stmt = (
-        select(ClockEvent)
-        .where(ClockEvent.user_id == user_id)
-        .order_by(ClockEvent.ts_utc.asc())
-    )
-    return list(db.scalars(stmt).all())
-
-
 @router.post("/events", response_model=ClockEventResponse)
 def create_event(
     payload: CreateClockEventRequest,
@@ -119,7 +67,6 @@ def create_event(
     event_type, location = _validate_payload(payload)
 
     last = _last_event(db, current_user.id)
-    _enforce_transition(last, event_type)
 
     geo_lat = payload.geo.lat if payload.geo else None
     geo_lng = payload.geo.lng if payload.geo else None
@@ -291,11 +238,6 @@ def delete_event(
     if event is None or event.user_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
 
-    events = _load_user_events(db, current_user.id)
-    new_events = [e for e in events if e.id != event_id]
-    new_events.sort(key=lambda e: _as_utc(e.ts_utc))
-    validate_sequence(new_events)
-
     db.delete(event)
     db.commit()
 
@@ -354,14 +296,6 @@ def update_event(
             status_code=status.HTTP_409_CONFLICT,
             detail="Cannot update clock events on absence days",
         )
-
-    events = _load_user_events(db, current_user.id)
-    events.sort(key=lambda e: _as_utc(e.ts_utc))
-    try:
-        validate_sequence(events)
-    except HTTPException:
-        db.rollback()
-        raise
 
     db.commit()
     db.refresh(event)
