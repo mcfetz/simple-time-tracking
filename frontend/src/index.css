@@ -528,31 +528,8 @@ button.linkButton:hover {
   gap: 8px;
 }
 
-.editEntryPickerButton {
-  width: 100%;
-  display: grid;
-  justify-items: start;
-  gap: 4px;
-  padding: 14px;
-  text-align: left;
-}
-
-.editEntryPickerValue {
-  font-size: 18px;
-  font-weight: 600;
-}
-
 .editEntryNativePicker {
   min-height: 46px;
-}
-
-.editEntryPreview {
-  display: grid;
-  gap: 4px;
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.72);
 }
 
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEventHandler, type RefObject } from 'react'
+import { useEffect, useMemo, useState, type FormEventHandler } from 'react'
 
 import { NoteModal } from '../components/NoteModal'
 import { IconPencil, IconTrash } from '../components/icons'
@@ -46,10 +46,6 @@ function toLocalDateTime(date: string, time: string): Date | null {
   return localDate
 }
 
-function supportsPicker(input: HTMLInputElement | null): input is HTMLInputElement & { showPicker: () => void } {
-  return !!input && typeof (input as HTMLInputElement & { showPicker?: () => void }).showPicker === 'function'
-}
-
 type EditEventModalProps = {
   edit: EditState
   loading: boolean
@@ -60,17 +56,6 @@ type EditEventModalProps = {
 }
 
 function EditEventModal({ edit, loading, onCancel, onChange, onSubmit, t }: EditEventModalProps) {
-  const dateInputRef = useRef<HTMLInputElement | null>(null)
-  const timeInputRef = useRef<HTMLInputElement | null>(null)
-  const preview = toLocalDateTime(edit.date, edit.time)
-
-  function openPicker(ref: RefObject<HTMLInputElement | null>) {
-    const input = ref.current
-    if (!input) return
-    input.focus()
-    if (supportsPicker(input)) input.showPicker()
-  }
-
   return (
     <div className="modalOverlay" onMouseDown={onCancel}>
       <div className="modal editEntryModal" onMouseDown={(e) => e.stopPropagation()}>
@@ -88,12 +73,7 @@ function EditEventModal({ edit, loading, onCancel, onChange, onSubmit, t }: Edit
           <div className="editEntryPickerGrid">
             <label className="editEntryPickerLabel">
               <span>{t('history.date')}</span>
-              <button className="secondary editEntryPickerButton" type="button" onClick={() => openPicker(dateInputRef)}>
-                <span className="editEntryPickerValue">{edit.date || 'YYYY-MM-DD'}</span>
-                <span className="muted small">{t('history.date')}</span>
-              </button>
               <input
-                ref={dateInputRef}
                 className="editEntryNativePicker"
                 type="date"
                 value={edit.date}
@@ -103,13 +83,8 @@ function EditEventModal({ edit, loading, onCancel, onChange, onSubmit, t }: Edit
             </label>
 
             <label className="editEntryPickerLabel">
-              <span>{t('history.time')}</span>
-              <button className="secondary editEntryPickerButton" type="button" onClick={() => openPicker(timeInputRef)}>
-                <span className="editEntryPickerValue">{edit.time || '--:--'}</span>
-                <span className="muted small">{t('history.timeOfDay')}</span>
-              </button>
+              <span>{t('history.timeOfDay')}</span>
               <input
-                ref={timeInputRef}
                 className="editEntryNativePicker"
                 type="time"
                 value={edit.time}
@@ -118,11 +93,6 @@ function EditEventModal({ edit, loading, onCancel, onChange, onSubmit, t }: Edit
                 required
               />
             </label>
-          </div>
-
-          <div className="editEntryPreview">
-            <span className="muted small">{t('history.selectedTime')}</span>
-            <strong>{preview ? `${edit.date} ${edit.time}` : '—'}</strong>
           </div>
 
           <label>
