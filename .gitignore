@@ -4,3 +4,6 @@
 **dist
 **/node_modules
 opencode.json
+
+.sisyphus
+node-compile-cache/v26.4.0-x64-8d7ad2ee-1000
