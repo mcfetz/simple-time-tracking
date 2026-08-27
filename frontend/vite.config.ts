@@ -21,7 +21,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       devOptions: {
         enabled: true,
         type: 'module',
@@ -29,8 +29,23 @@ export default defineConfig({
       includeAssets: ['favicon.svg', 'robots.txt'],
       workbox: {
         cleanupOutdatedCaches: true,
-        navigateFallback: '/index.html',
         importScripts: ['push-sw.js'],
+        manifestTransforms: [
+          (entries) => ({
+            manifest: entries.filter((e) => e.url !== 'index.html'),
+            warnings: [],
+          }),
+        ],
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'pages',
+              expiration: { maxEntries: 5 },
+            },
+          },
+        ],
       },
         manifest: {
           name: 'Simple Time Tracking',
