@@ -12,14 +12,14 @@
   "dependencies": {
     "idb": "^8.0.3",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
+    "@types/react-dom": "^19.2.5",
     "@vitejs/plugin-react": "^5.1.1",
     "eslint": "^10.9.0",
     "eslint-plugin-react-hooks": "^7.1.1",
