@@ -203,6 +203,19 @@ class MonthReportResponse(BaseModel):
     days: list[ReportDay]
 
 
+class MonthlyBalancePoint(BaseModel):
+    month: str
+    label: str
+    expected_minutes: int
+    worked_minutes: int
+    balance_minutes: int
+    cumulative_balance_minutes: int
+
+
+class MonthlyBalancesResponse(BaseModel):
+    points: list[MonthlyBalancePoint]
+
+
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=256)

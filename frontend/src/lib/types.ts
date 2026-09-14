@@ -133,3 +133,16 @@ export type MonthReport = {
   home_office_target_ratio: number
   days: ReportDay[]
 }
+
+export type MonthlyBalancePoint = {
+  month: string
+  label: string
+  expected_minutes: number
+  worked_minutes: number
+  balance_minutes: number
+  cumulative_balance_minutes: number
+}
+
+export type MonthlyBalancesResponse = {
+  points: MonthlyBalancePoint[]
+}

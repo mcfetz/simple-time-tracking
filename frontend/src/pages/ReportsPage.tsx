@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
-import type { MonthReport, WeekReport } from '../lib/types'
+import type { MonthlyBalancesResponse, MonthReport, WeekReport } from '../lib/types'
 import { useI18n } from '../lib/i18n'
 import { formatDateLocal } from '../lib/format'
+import { MonthlyBalanceChart } from '../components/MonthlyBalanceChart'
 
 function fmtMinutes(min: number): string {
   const h = Math.floor(min / 60)
@@ -21,6 +22,7 @@ export function ReportsPage() {
 
   const [week, setWeek] = useState<WeekReport | null>(null)
   const [month, setMonth] = useState<MonthReport | null>(null)
+  const [balances, setBalances] = useState<MonthlyBalancesResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   function setWeekParam(startLocal: string) {
@@ -56,8 +58,10 @@ export function ReportsPage() {
       setError(null)
       const w = await apiFetch<WeekReport>(weekStart ? `/reports/week?start=${encodeURIComponent(weekStart)}` : '/reports/week')
       const m = await apiFetch<MonthReport>(monthKey ? `/reports/month?month=${encodeURIComponent(monthKey)}` : '/reports/month')
+      const b = await apiFetch<MonthlyBalancesResponse>('/reports/monthly-balances')
       setWeek(w)
       setMonth(m)
+      setBalances(b)
     })().catch((e) => setError((e as { message?: string })?.message || t('errors.generic')))
   }, [weekStart, monthKey])
 
@@ -205,6 +209,15 @@ export function ReportsPage() {
           )}
         </section>
       </div>
+
+      <section className="card" style={{ marginTop: 16 }}>
+        <h2 style={{ margin: 0 }}>{t('reports.last12Months')}</h2>
+        {!balances ? (
+          <div className="muted">{t('common.loading')}</div>
+        ) : (
+          <MonthlyBalanceChart points={balances.points} />
+        )}
+      </section>
     </div>
   )
 }

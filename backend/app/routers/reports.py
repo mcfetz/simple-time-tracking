@@ -16,6 +16,8 @@ from app.reporting import compute_day_summary, day_bounds_utc, iter_local_days
 from app.schemas import (
     AbsenceReasonResponse,
     AbsenceResponse,
+    MonthlyBalancePoint,
+    MonthlyBalancesResponse,
     MonthReportResponse,
     ReportDay,
     WeekReportResponse,
@@ -402,3 +404,62 @@ def alltime_report(
     end_local_exclusive = today_local + timedelta(days=1)
     # clamp: if overtime_start_date is in the future relative to earliest event, still respect it
     return _report_range(db, current_user, start_local, end_local_exclusive)
+
+
+@router.get("/monthly-balances", response_model=MonthlyBalancesResponse)
+def monthly_balances_report(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    tz = current_user.timezone
+    zone = ZoneInfo(tz)
+    now_utc = datetime.now(UTC)
+    today_local = now_utc.astimezone(zone).date()
+    cur_start = date(today_local.year, today_local.month, 1)
+    starts: list[date] = []
+    cursor = cur_start
+    for _ in range(12):
+        starts.insert(0, cursor)
+        # step back one month
+        if cursor.month == 1:
+            cursor = date(cursor.year - 1, 12, 1)
+        else:
+            cursor = date(cursor.year, cursor.month - 1, 1)
+
+    # monthly balances are plain monthly deltas (with overtime_start_date respected as in _report_range)
+    points: list[MonthlyBalancePoint] = []
+    cumulative = 0
+    for s in starts:
+        e = date(s.year + 1, 1, 1) if s.month == 12 else date(s.year, s.month + 1, 1)
+        rep = _report_range(db, current_user, s, e)
+        cumulative += rep.balance_minutes
+        label = s.strftime("%b %y")
+        points.append(
+            MonthlyBalancePoint(
+                month=s.strftime("%Y-%m"),
+                label=label,
+                expected_minutes=rep.expected_minutes,
+                worked_minutes=rep.total_worked_minutes,
+                balance_minutes=rep.balance_minutes,
+                cumulative_balance_minutes=cumulative,
+            )
+        )
+
+    # cumulative from beginning of recorded data: if earliest day is before starts[0], include its contribution
+    earliest = db.scalar(
+        select(ClockEvent.ts_utc)
+        .where(ClockEvent.user_id == current_user.id)
+        .order_by(ClockEvent.ts_utc.asc())
+        .limit(1)
+    )
+    if earliest is not None:
+        earliest_local = earliest.astimezone(zone).date()
+        prefix_end = starts[0]
+        if earliest_local < prefix_end:
+            prefix_rep = _report_range(db, current_user, earliest_local, prefix_end)
+            # _report_range's balance already includes Soll/Ist delta; shift all cumulatives
+            offset = prefix_rep.balance_minutes
+            for p in points:
+                p.cumulative_balance_minutes += offset
+
+    return MonthlyBalancesResponse(points=points)
