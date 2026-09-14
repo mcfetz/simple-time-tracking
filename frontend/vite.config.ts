@@ -30,12 +30,6 @@ export default defineConfig({
       workbox: {
         cleanupOutdatedCaches: true,
         importScripts: ['push-sw.js'],
-        manifestTransforms: [
-          (entries) => ({
-            manifest: entries.filter((e) => e.url !== 'index.html'),
-            warnings: [],
-          }),
-        ],
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.mode === 'navigate',

@@ -1,9 +1,9 @@
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend } from 'chart.js'
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, BarController, LineElement, LineController, PointElement, Title, Tooltip, Legend } from 'chart.js'
 import { Chart } from 'react-chartjs-2'
 import type { MonthlyBalancePoint } from '../lib/types'
 import { useI18n } from '../lib/i18n'
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend)
+ChartJS.register(CategoryScale, LinearScale, BarElement, BarController, LineElement, LineController, PointElement, Title, Tooltip, Legend)
 
 function fmtHours(min: number): string {
   const sign = min < 0 ? '-' : ''
