@@ -345,13 +345,12 @@ export function SettingsPage() {
                   return (
                     <div style={{ display: 'grid', gap: 8 }}>
                       {rows.map(([label, url]) => (
-                        <div key={label} style={{ display: 'grid', gap: 4, border: '1px solid #e5e7eb', borderRadius: 8, padding: 8 }}>
+                        <div
+                          key={label}
+                          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #e5e7eb', borderRadius: 8, padding: '8px 10px', gap: 8 }}
+                        >
                           <strong className="small">{label}</strong>
-                          <div className="muted" style={{ wordBreak: 'break-all', fontSize: 13 }}>{url}</div>
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <button type="button" className="secondary" onClick={() => copyText(url)}>{t('common.save') === t('common.save') ? 'Copy' : 'Copy'}</button>
-                            <code className="muted" style={{ alignSelf: 'center', fontSize: 12, whiteSpace: 'pre-wrap' }}>{`curl -i ${url}`}</code>
-                          </div>
+                          <button type="button" className="secondary" onClick={() => copyText(url)}>Copy</button>
                         </div>
                       ))}
                     </div>
