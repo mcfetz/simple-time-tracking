@@ -124,7 +124,10 @@ export function ReportsPage() {
                     </div>
                     <div className="row">
                       <span className="muted small">{t('reports.break')}</span>
-                      <span className="muted small">{fmtMinutes(d.break_minutes)}</span>
+                      <span className="muted small">
+                        {fmtMinutes(d.break_minutes)}
+                        {!d.break_compliant_total && d.required_break_minutes > 0 ? ` (${t('reports.breakRequired')} ${fmtMinutes(d.required_break_minutes)})` : ''}
+                      </span>
                     </div>
                     {d.max_daily_work_exceeded || d.rest_period_violation || !d.break_compliant_total ? (
                       <div className="muted small">

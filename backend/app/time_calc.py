@@ -34,6 +34,11 @@ def required_break_total_minutes(net_work_minutes: int) -> int:
     return 0
 
 
+def effective_worked_minutes(*, worked_minutes: int, break_minutes: int, required_break_minutes: int) -> int:
+    deficit = max(0, required_break_minutes - break_minutes)
+    return max(0, worked_minutes - deficit)
+
+
 def required_break_continuous_minutes(net_work_minutes: int) -> int:
     return 30 if required_break_total_minutes(net_work_minutes) > 0 else 0
 

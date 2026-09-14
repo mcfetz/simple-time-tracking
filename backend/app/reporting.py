@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 
 from app.time_calc import (
     as_utc,
+    effective_worked_minutes,
     gaps_between_sessions,
     max_continuous_break_minutes,
     minutes,
@@ -151,12 +152,42 @@ def compute_day_summary(  # noqa: PLR0912, PLR0913, PLR0915
     required_break = required_break_total_minutes(worked_minutes)
     required_cont = required_break_continuous_minutes(worked_minutes)
     max_cont = max_continuous_break_minutes(break_intervals)
+    effective_worked = effective_worked_minutes(
+        worked_minutes=worked_minutes, break_minutes=break_minutes, required_break_minutes=required_break
+    )
 
-    max_daily_work_exceeded = worked_minutes > 10 * 60
+    max_daily_work_exceeded = effective_worked > 10 * 60
+
+    # distribute statutory deduction proportionally to HOME/OFFICE
+    raw_home_m = minutes(home_seconds)
+    raw_office_m = minutes(office_seconds)
+    if effective_worked == worked_minutes or worked_minutes == 0:
+        eff_home_m, eff_office_m = raw_home_m, raw_office_m
+    else:
+        deficit = worked_minutes - effective_worked
+        total_raw_loc = raw_home_m + raw_office_m
+        if total_raw_loc == 0:
+            eff_home_m, eff_office_m = 0, 0
+        else:
+            home_deficit = round(deficit * raw_home_m / total_raw_loc)
+            # guard rounding
+            home_deficit = max(0, min(home_deficit, deficit, raw_home_m))
+            office_deficit = deficit - home_deficit
+            office_deficit = max(0, min(office_deficit, raw_office_m))
+            # adjust if rounding leaves 1 minute off due to caps
+            eff_home_m = max(0, raw_home_m - home_deficit)
+            eff_office_m = max(0, raw_office_m - office_deficit)
+            # if still off by 1 due to rounding, fix
+            if eff_home_m + eff_office_m != effective_worked:
+                diff = effective_worked - (eff_home_m + eff_office_m)
+                if eff_home_m >= eff_office_m:
+                    eff_home_m = max(0, eff_home_m + diff)
+                else:
+                    eff_office_m = max(0, eff_office_m + diff)
 
     return DaySummary(
         date_local=day_local.isoformat(),
-        worked_minutes=worked_minutes,
+        worked_minutes=effective_worked,
         break_minutes=break_minutes,
         required_break_minutes=required_break,
         required_continuous_break_minutes=required_cont,
@@ -164,8 +195,8 @@ def compute_day_summary(  # noqa: PLR0912, PLR0913, PLR0915
         break_compliant_total=break_minutes >= required_break,
         break_compliant_continuous=max_cont >= required_cont,
         has_open_interval=has_open_interval,
-        home_minutes=minutes(home_seconds),
-        office_minutes=minutes(office_seconds),
+        home_minutes=eff_home_m,
+        office_minutes=eff_office_m,
         max_daily_work_exceeded=max_daily_work_exceeded,
         rest_period_minutes=rest_period_minutes,
         rest_period_violation=rest_period_violation,

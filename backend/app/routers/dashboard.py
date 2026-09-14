@@ -16,6 +16,7 @@ from app.security import get_current_user
 from app.time_calc import (
     as_utc,
     close_open_interval,
+    effective_worked_minutes,
     gaps_between_sessions,
     max_continuous_break_minutes,
     minutes,
@@ -139,14 +140,16 @@ def today(  # noqa: PLR0912, PLR0915
 
     worked_minutes = minutes(worked_seconds)
     break_minutes = minutes(break_seconds)
+    required_break = required_break_total_minutes(worked_minutes)
+    effective_worked = effective_worked_minutes(
+        worked_minutes=worked_minutes, break_minutes=break_minutes, required_break_minutes=required_break
+    )
+    remaining_break = max(0, required_break - break_minutes)
 
     target_minutes = (
         current_user.settings.daily_target_minutes if current_user.settings else 468
     )
-    remaining_work = max(0, target_minutes - worked_minutes)
-
-    required_break = required_break_total_minutes(worked_minutes)
-    remaining_break = max(0, required_break - break_minutes)
+    remaining_work = max(0, target_minutes - effective_worked)
 
     required_cont = required_break_continuous_minutes(worked_minutes)
     max_cont = max_continuous_break_minutes(break_intervals)
@@ -158,7 +161,7 @@ def today(  # noqa: PLR0912, PLR0915
     elif open_kind == "BREAK":
         state = "BREAK"
 
-    max_daily_work_exceeded = worked_minutes > 10 * 60
+    max_daily_work_exceeded = effective_worked > 10 * 60
 
     rest_period_minutes: int | None = None
     rest_period_violation = False
@@ -181,7 +184,7 @@ def today(  # noqa: PLR0912, PLR0915
         date_local=date_local,
         timezone=tz,
         state=state,
-        worked_minutes=worked_minutes,
+        worked_minutes=effective_worked,
         target_minutes=target_minutes,
         remaining_work_minutes=remaining_work,
         break_minutes=break_minutes,
