@@ -173,6 +173,7 @@ const EN: Dict = {
   'settings.webhookNoToken': 'No webhook link yet.',
   'settings.webhookConfirmRegenerate': 'Regenerate? The old link will stop working.',
   'settings.webhookConfirmDelete': 'Remove webhook link?',
+  'settings.webhookOffset': 'Offset (minutes, e.g. -5 for 5 min ago, 0 or empty = now)',
 
   'history.source': 'Source',
   'history.sourceWebhook': 'Webhook',
@@ -346,6 +347,7 @@ const DE: Dict = {
   'settings.webhookNoToken': 'Noch kein Webhook-Link.',
   'settings.webhookConfirmRegenerate': 'Neu erzeugen? Der alte Link wird ungültig.',
   'settings.webhookConfirmDelete': 'Webhook-Link wirklich entfernen?',
+  'settings.webhookOffset': 'Offset (Minuten, z.B. -5 für 5 Min in Vergangenheit, 0/leer = jetzt)',
 
   'history.source': 'Quelle',
   'history.sourceWebhook': 'Webhook',

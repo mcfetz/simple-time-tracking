@@ -38,15 +38,32 @@ def _last_event(db: Session, user_id: int) -> ClockEvent | None:
 
 
 def _create_event_for_user(
-    db: Session, user: User, event_type: str, location: str | None
+    db: Session, user: User, event_type: str, location: str | None, offset: int | None = None
 ) -> ClockEvent:
     validate_event_fields(event_type=event_type, location=location)
 
     now = utc_now()
+    if offset is not None:
+        now = now + timedelta(minutes=offset)
+        if now > utc_now() + timedelta(minutes=5):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="offset results in future timestamp",
+            )
+        if now < utc_now() - timedelta(days=7):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="offset too far in the past",
+            )
     last = _last_event(db, user.id)
     if last is not None:
         last_ts = _as_utc(last.ts_utc)
         if now <= last_ts:
+            if offset is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Event timestamp must be after last event",
+                )
             now = last_ts + timedelta(microseconds=1)
 
     day_local = local_date_from_utc(now, user.timezone)
@@ -164,7 +181,7 @@ def delete_webhook_token(
     db.commit()
 
 
-def _handle_webhook_come(db: Session, token: str, location: str | None) -> ClockEventResponse:
+def _handle_webhook_come(db: Session, token: str, location: str | None, offset: int | None = None) -> ClockEventResponse:
     user, row = _lookup_user_by_token(db, token)
     if location is None:
         raise HTTPException(
@@ -173,15 +190,15 @@ def _handle_webhook_come(db: Session, token: str, location: str | None) -> Clock
     loc = location.strip().upper()
     if loc not in ("HOME", "OFFICE"):
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid location")
-    event = _create_event_for_user(db, user, "COME", loc)
+    event = _create_event_for_user(db, user, "COME", loc, offset=offset)
     row.last_used_at = _as_utc(event.ts_utc)
     db.commit()
     return _to_response(event)
 
 
-def _handle_webhook_go(db: Session, token: str) -> ClockEventResponse:
+def _handle_webhook_go(db: Session, token: str, offset: int | None = None) -> ClockEventResponse:
     user, row = _lookup_user_by_token(db, token)
-    event = _create_event_for_user(db, user, "GO", None)
+    event = _create_event_for_user(db, user, "GO", None, offset=offset)
     row.last_used_at = _as_utc(event.ts_utc)
     db.commit()
     return _to_response(event)
@@ -194,31 +211,35 @@ def _handle_webhook_go(db: Session, token: str) -> ClockEventResponse:
 def webhook_come_get(
     token: str,
     location: str | None = Query(default=None, description="HOME or OFFICE"),
+    offset: int | None = Query(default=None, description="Offset in minutes relative to now"),
     db: Session = Depends(get_db),
 ):
-    return _handle_webhook_come(db, token, location)
+    return _handle_webhook_come(db, token, location, offset=offset)
 
 
 @router.post("/{token}/come", response_model=ClockEventResponse)
 def webhook_come_post(
     token: str,
     location: str | None = Query(default=None, description="HOME or OFFICE"),
+    offset: int | None = Query(default=None, description="Offset in minutes relative to now"),
     db: Session = Depends(get_db),
 ):
-    return _handle_webhook_come(db, token, location)
+    return _handle_webhook_come(db, token, location, offset=offset)
 
 
 @router.get("/{token}/go", response_model=ClockEventResponse)
 def webhook_go_get(
     token: str,
+    offset: int | None = Query(default=None, description="Offset in minutes relative to now"),
     db: Session = Depends(get_db),
 ):
-    return _handle_webhook_go(db, token)
+    return _handle_webhook_go(db, token, offset=offset)
 
 
 @router.post("/{token}/go", response_model=ClockEventResponse)
 def webhook_go_post(
     token: str,
+    offset: int | None = Query(default=None, description="Offset in minutes relative to now"),
     db: Session = Depends(get_db),
 ):
-    return _handle_webhook_go(db, token)
+    return _handle_webhook_go(db, token, offset=offset)

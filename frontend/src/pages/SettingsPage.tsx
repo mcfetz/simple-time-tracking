@@ -27,6 +27,7 @@ export function SettingsPage() {
   const [webhook, setWebhook] = useState<WebhookToken | null>(null)
   const [webhookLoading, setWebhookLoading] = useState(false)
   const [webhookCopied, setWebhookCopied] = useState('')
+  const [webhookOffset, setWebhookOffset] = useState('')
 
   function webhookBase(): string {
     if (typeof window !== 'undefined' && window.location.origin) return window.location.origin
@@ -308,6 +309,17 @@ export function SettingsPage() {
           <section className="card">
             <h2 style={{ marginTop: 0 }}>{t('settings.webhooks')}</h2>
             <div className="muted small" style={{ marginBottom: 8 }}>{t('settings.webhookDesc')}</div>
+            <label style={{ display: 'grid', gap: 4, marginBottom: 10, maxWidth: 320 }}>
+              <span className="muted small">{t('settings.webhookOffset')}</span>
+              <input
+                type="number"
+                step="1"
+                value={webhookOffset}
+                onChange={(e) => setWebhookOffset(e.target.value)}
+                placeholder="-5"
+                style={{ maxWidth: 180 }}
+              />
+            </label>
             {webhook ? (
               <>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
@@ -322,10 +334,13 @@ export function SettingsPage() {
                 {(() => {
                   const base = webhookBase()
                   const tok = webhook.token
+                  const offRaw = webhookOffset.trim()
+                  const off = offRaw ? (Number(offRaw) || 0) : null
+                  const offSuffix = off !== null && off !== 0 ? `&offset=${off}` : ''
                   const rows: Array<[string, string]> = [
-                    [t('settings.webhookComeOffice'), `${base}/api/webhooks/${tok}/come?location=OFFICE`],
-                    [t('settings.webhookComeHome'), `${base}/api/webhooks/${tok}/come?location=HOME`],
-                    [t('settings.webhookGo'), `${base}/api/webhooks/${tok}/go`],
+                    [t('settings.webhookComeOffice'), `${base}/api/webhooks/${tok}/come?location=OFFICE${offSuffix}`],
+                    [t('settings.webhookComeHome'), `${base}/api/webhooks/${tok}/come?location=HOME${offSuffix}`],
+                    [t('settings.webhookGo'), `${base}/api/webhooks/${tok}/go${offSuffix ? `?offset=${off}` : ''}`],
                   ]
                   return (
                     <div style={{ display: 'grid', gap: 8 }}>
