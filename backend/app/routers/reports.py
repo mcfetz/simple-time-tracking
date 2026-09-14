@@ -175,33 +175,17 @@ def week_report(  # noqa: PLR0915
     )
 
 
-@router.get("/month", response_model=MonthReportResponse)
-def month_report(  # noqa: PLR0912, PLR0915
-    month: str | None = None,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
+def _report_range(
+    db: Session,
+    current_user: User,
+    start_local: date,
+    end_local_exclusive: date,
+) -> MonthReportResponse:
     tz = current_user.timezone
     zone = ZoneInfo(tz)
 
-    today_local = datetime.now(UTC).astimezone(zone).date()
-    if month is None:
-        year = today_local.year
-        mon = today_local.month
-    else:
-        parts = month.split("-")
-        if len(parts) != 2:  # noqa: PLR2004
-            raise HTTPException(status_code=422, detail="Invalid month")
-        year = int(parts[0])
-        mon = int(parts[1])
-        if mon < 1 or mon > 12:  # noqa: PLR2004
-            raise HTTPException(status_code=422, detail="Invalid month")
-
-    month_start = date(year, mon, 1)
-    month_end = date(year + 1, 1, 1) if mon == 12 else date(year, mon + 1, 1)  # noqa: PLR2004
-
-    start_utc, _ = day_bounds_utc(month_start, tz)
-    end_utc, _ = day_bounds_utc(month_end, tz)
+    start_utc, _ = day_bounds_utc(start_local, tz)
+    end_utc, _ = day_bounds_utc(end_local_exclusive, tz)
 
     stmt = (
         select(ClockEvent)
@@ -214,15 +198,15 @@ def month_report(  # noqa: PLR0912, PLR0915
     abs_stmt = (
         select(Absence)
         .where(Absence.user_id == current_user.id)
-        .where(Absence.start_date < month_end)
-        .where(Absence.end_date >= month_start)
+        .where(Absence.start_date < end_local_exclusive)
+        .where(Absence.end_date >= start_local)
     )
     absences = list(db.scalars(abs_stmt).all())
 
     note_stmt = (
         select(DayNote.date_local)
         .where(DayNote.user_id == current_user.id)
-        .where(and_(DayNote.date_local >= month_start, DayNote.date_local < month_end))
+        .where(and_(DayNote.date_local >= start_local, DayNote.date_local < end_local_exclusive))
     )
     note_days = {d.isoformat() for d in db.execute(note_stmt).scalars().all()}
     reason_ids = {a.reason_id for a in absences}
@@ -258,7 +242,7 @@ def month_report(  # noqa: PLR0912, PLR0915
     worked_days = 0
     home_office_days = 0
 
-    for d in iter_local_days(month_start, month_end):
+    for d in iter_local_days(start_local, end_local_exclusive):
         prev_day = (d - timedelta(days=1)).isoformat()
         last_go_prev = last_go_ts.get(prev_day)
         first_come_today = first_come_ts.get(d.isoformat())
@@ -324,8 +308,8 @@ def month_report(  # noqa: PLR0912, PLR0915
     )
 
     return MonthReportResponse(
-        month_start_local=month_start.isoformat(),
-        month_end_local_exclusive=month_end.isoformat(),
+        month_start_local=start_local.isoformat(),
+        month_end_local_exclusive=end_local_exclusive.isoformat(),
         timezone=tz,
         total_worked_minutes=total_worked,
         total_break_minutes=total_break,
@@ -335,3 +319,44 @@ def month_report(  # noqa: PLR0912, PLR0915
         home_office_target_ratio=target_ratio,
         days=days,
     )
+
+
+@router.get("/month", response_model=MonthReportResponse)
+def month_report(  # noqa: PLR0912
+    month: str | None = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    tz = current_user.timezone
+    zone = ZoneInfo(tz)
+
+    today_local = datetime.now(UTC).astimezone(zone).date()
+    if month is None:
+        year = today_local.year
+        mon = today_local.month
+    else:
+        parts = month.split("-")
+        if len(parts) != 2:  # noqa: PLR2004
+            raise HTTPException(status_code=422, detail="Invalid month")
+        year = int(parts[0])
+        mon = int(parts[1])
+        if mon < 1 or mon > 12:  # noqa: PLR2004
+            raise HTTPException(status_code=422, detail="Invalid month")
+
+    month_start = date(year, mon, 1)
+    month_end = date(year + 1, 1, 1) if mon == 12 else date(year, mon + 1, 1)  # noqa: PLR2004
+
+    return _report_range(db, current_user, month_start, month_end)
+
+
+@router.get("/last30", response_model=MonthReportResponse)
+def last30_report(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    tz = current_user.timezone
+    zone = ZoneInfo(tz)
+    today_local = datetime.now(UTC).astimezone(zone).date()
+    start_local = today_local - timedelta(days=29)
+    end_local_exclusive = today_local + timedelta(days=1)
+    return _report_range(db, current_user, start_local, end_local_exclusive)

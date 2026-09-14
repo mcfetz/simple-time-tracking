@@ -80,6 +80,7 @@ export function DashboardPage() {
 
   const [status, setStatus] = useState<DailyStatusResponse | null>(null)
   const [month, setMonth] = useState<MonthReport | null>(null)
+  const [monthMode, setMonthMode] = useState<'month' | 'last30'>('month')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -101,12 +102,13 @@ export function DashboardPage() {
   }, [])
 
   const monthName = useMemo(() => {
+    if (monthMode === 'last30') return lang === 'de' ? 'Letzte 30 Tage' : 'Last 30 days'
     const locale = lang === 'de' ? 'de-DE' : 'en-US'
     const iso = month?.month_start_local ?? fallbackTodayLocal
     const dt = parseIsoDateUtc(iso)
     if (!dt) return ''
     return new Intl.DateTimeFormat(locale, { month: 'long', timeZone: 'UTC' }).format(dt)
-  }, [fallbackTodayLocal, lang, month?.month_start_local])
+  }, [fallbackTodayLocal, lang, monthMode, month?.month_start_local])
 
   const heatmapWeekdayLabels = useMemo(() => {
     if (!month) return null
@@ -133,15 +135,21 @@ export function DashboardPage() {
     setStatus(data)
   }
 
-  async function loadMonth() {
-    const data = await apiFetch<MonthReport>('/reports/month')
+  async function loadMonth(mode = monthMode) {
+    const data = await apiFetch<MonthReport>(mode === 'last30' ? '/reports/last30' : '/reports/month')
     setMonth(data)
   }
 
   useEffect(() => {
     loadStatus().catch((e) => setError((e as { message?: string })?.message || t('errors.generic')))
-    loadMonth().catch(() => undefined)
+    loadMonth(monthMode).catch(() => undefined)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    loadMonth(monthMode).catch(() => undefined)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monthMode])
 
   useEffect(() => {
     let cancelled = false
@@ -503,7 +511,7 @@ export function DashboardPage() {
       </section>
 
       <section className="card">
-        <h2 style={{ margin: 0 }}>
+        <h2 style={{ margin: 0, cursor: 'pointer', userSelect: 'none' }} onClick={() => setMonthMode((m) => (m === 'month' ? 'last30' : 'month'))}>
           {t('dashboard.month')}{' '}
           <span className="muted" style={{ fontWeight: 500 }}>
             · {monthName}

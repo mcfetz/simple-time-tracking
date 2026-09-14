@@ -11,7 +11,7 @@ import type { ClockEvent } from '../lib/types'
 import { useSearchParams } from 'react-router-dom'
 
 type EditState = {
-  id: number
+  id: number | null
   date: string
   time: string
   type: ClockEvent['type']
@@ -56,13 +56,14 @@ type EditEventModalProps = {
 }
 
 function EditEventModal({ edit, loading, onCancel, onChange, onSubmit, t }: EditEventModalProps) {
+  const isCreate = edit.id === null
   return (
     <div className="modalOverlay" onMouseDown={onCancel}>
       <div className="modal editEntryModal" onMouseDown={(e) => e.stopPropagation()}>
         <form className="editEntryForm" onSubmit={onSubmit}>
           <div className="row">
             <div>
-              <strong>{t('history.editEntry')}</strong>
+              <strong>{t(isCreate ? 'history.newEntry' : 'history.editEntry')}</strong>
               <div className="muted small">{t('history.editPickerHint')}</div>
             </div>
             <button className="secondary" type="button" onClick={onCancel}>
@@ -224,6 +225,13 @@ export function HistoryPage() {
     setEdit({ id: e.id, date: next.date, time: next.time, type: e.type, location: e.location })
   }
 
+  function startCreate() {
+    const now = new Date()
+    const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+    const time = `${pad(now.getHours())}:${pad(now.getMinutes())}`
+    setEdit({ id: null, date, time, type: 'COME', location: 'OFFICE' })
+  }
+
   const submitEdit: FormEventHandler<HTMLFormElement> = async (ev) => {
     ev.preventDefault()
     if (!edit) return
@@ -233,6 +241,20 @@ export function HistoryPage() {
       const localDate = toLocalDateTime(edit.date, edit.time)
       if (!localDate) {
         throw new Error(t('history.invalidDateTime'))
+      }
+
+      if (edit.id === null) {
+        const body: Record<string, unknown> = {
+          type: edit.type,
+          ts_utc: localDate.toISOString(),
+        }
+        if (edit.type === 'COME') {
+          body.location = edit.location ?? 'OFFICE'
+        }
+        await apiFetch<ClockEvent>('/clock/events', { method: 'POST', body })
+        setEdit(null)
+        await load()
+        return
       }
 
       const body: Record<string, unknown> = {
@@ -307,6 +329,9 @@ export function HistoryPage() {
           {events.length} {t('history.entries')}
         </span>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}>
+          <button type="button" disabled={loading} onClick={startCreate}>
+            + {t('history.createEntry')}
+          </button>
           <button className="secondary" type="button" disabled={loading || !startParam} onClick={() => setStartParam(shiftIsoDate(startParam, -7))}>
             ‹
           </button>

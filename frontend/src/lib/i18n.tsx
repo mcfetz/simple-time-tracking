@@ -177,6 +177,8 @@ const EN: Dict = {
 
   'history.source': 'Source',
   'history.sourceWebhook': 'Webhook',
+  'history.createEntry': 'Add entry',
+  'history.newEntry': 'New entry',
 }
 
 const DE: Dict = {
@@ -351,6 +353,8 @@ const DE: Dict = {
 
   'history.source': 'Quelle',
   'history.sourceWebhook': 'Webhook',
+  'history.createEntry': 'Eintrag anlegen',
+  'history.newEntry': 'Neuer Eintrag',
 }
 
 function detectInitialLang(): Lang {
