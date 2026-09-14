@@ -307,6 +307,21 @@ def _report_range(
         current_user.settings.home_office_target_ratio if current_user.settings else 0.4
     )
 
+    today_local = datetime.now(UTC).astimezone(zone).date()
+    expected_total = 0
+    for d in iter_local_days(start_local, min(end_local_exclusive, today_local + timedelta(days=1))):
+        if d > today_local:
+            continue
+        if current_user.settings.overtime_start_date and d < current_user.settings.overtime_start_date:
+            continue
+        has_absence = any(a.start_date <= d <= a.end_date for a in absences)
+        if has_absence:
+            continue
+        if d.weekday() >= 5:
+            continue
+        expected_total += current_user.settings.daily_target_minutes if current_user.settings else 468
+    balance = total_worked - expected_total
+
     return MonthReportResponse(
         month_start_local=start_local.isoformat(),
         month_end_local_exclusive=end_local_exclusive.isoformat(),
@@ -317,6 +332,8 @@ def _report_range(
         home_office_days=home_office_days,
         home_office_ratio=ratio,
         home_office_target_ratio=target_ratio,
+        expected_minutes=expected_total,
+        balance_minutes=balance,
         days=days,
     )
 
@@ -359,4 +376,29 @@ def last30_report(
     today_local = datetime.now(UTC).astimezone(zone).date()
     start_local = today_local - timedelta(days=29)
     end_local_exclusive = today_local + timedelta(days=1)
+    return _report_range(db, current_user, start_local, end_local_exclusive)
+
+
+@router.get("/alltime", response_model=MonthReportResponse)
+def alltime_report(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    tz = current_user.timezone
+    zone = ZoneInfo(tz)
+    today_local = datetime.now(UTC).astimezone(zone).date()
+    start_local = current_user.settings.overtime_start_date if current_user.settings and current_user.settings.overtime_start_date else None
+    if start_local is None:
+        earliest = db.scalar(
+            select(ClockEvent.ts_utc)
+            .where(ClockEvent.user_id == current_user.id)
+            .order_by(ClockEvent.ts_utc.asc())
+            .limit(1)
+        )
+        if earliest is None:
+            # no events at all -> empty range ending tomorrow
+            return _report_range(db, current_user, today_local, today_local + timedelta(days=1))
+        start_local = earliest.astimezone(zone).date()
+    end_local_exclusive = today_local + timedelta(days=1)
+    # clamp: if overtime_start_date is in the future relative to earliest event, still respect it
     return _report_range(db, current_user, start_local, end_local_exclusive)

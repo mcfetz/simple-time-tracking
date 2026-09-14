@@ -125,6 +125,8 @@ export type MonthReport = {
   timezone: string
   total_worked_minutes: number
   total_break_minutes: number
+  expected_minutes: number
+  balance_minutes: number
   worked_days: number
   home_office_days: number
   home_office_ratio: number

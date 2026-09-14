@@ -80,6 +80,7 @@ export function DashboardPage() {
 
   const [status, setStatus] = useState<DailyStatusResponse | null>(null)
   const [month, setMonth] = useState<MonthReport | null>(null)
+  const [alltime, setAlltime] = useState<MonthReport | null>(null)
   const [monthMode, setMonthMode] = useState<'month' | 'last30'>('month')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -140,9 +141,15 @@ export function DashboardPage() {
     setMonth(data)
   }
 
+  async function loadAlltime() {
+    const data = await apiFetch<MonthReport>('/reports/alltime')
+    setAlltime(data)
+  }
+
   useEffect(() => {
     loadStatus().catch((e) => setError((e as { message?: string })?.message || t('errors.generic')))
     loadMonth(monthMode).catch(() => undefined)
+    loadAlltime().catch(() => undefined)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -306,6 +313,25 @@ export function DashboardPage() {
 
     return { balanceMinutes, expectedMinutes, workedMinutes }
   }, [month, status])
+
+  const alltimeOvertime = useMemo(() => {
+    if (!status || !alltime) return null
+    const start = status.overtime_start_date
+    let balanceMinutes = 0
+    let expectedMinutes = 0
+    let workedMinutes = 0
+    for (const d of alltime.days) {
+      if (d.date_local > status.date_local) continue
+      if (start && isBeforeLocalDate(d.date_local, start)) continue
+      if (d.absence) continue
+      const weekend = isWeekendDate(d.date_local)
+      const expected = weekend ? 0 : status.target_minutes
+      expectedMinutes += expected
+      workedMinutes += d.worked_minutes
+      balanceMinutes += d.worked_minutes - expected
+    }
+    return { balanceMinutes, expectedMinutes, workedMinutes }
+  }, [alltime, status])
 
   const heatmapDays = useMemo(() => {
     if (!status || !month) return []
@@ -557,6 +583,20 @@ export function DashboardPage() {
                 />
               ))}
             </div>
+          </div>
+        ) : null}
+      </section>
+
+      <section className="card" style={{ opacity: alltimeOvertime ? 1 : 0.7 }}>
+        <h2 style={{ margin: 0 }}>{t('dashboard.overtimeAllTime')}</h2>
+        {!alltime || !status ? <div className="muted">...</div> : null}
+        {alltimeOvertime ? (
+          <div className="row">
+            <span className="muted">{t('dashboard.overtimeAllTime')}</span>
+            <strong className={alltimeOvertime.balanceMinutes >= 0 ? 'okText' : 'errorText'}>
+              {alltimeOvertime.balanceMinutes >= 0 ? '+' : '-'}
+              {formatMinutes(Math.abs(alltimeOvertime.balanceMinutes))}
+            </strong>
           </div>
         ) : null}
       </section>

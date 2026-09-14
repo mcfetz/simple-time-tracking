@@ -186,6 +186,21 @@ export function ReportsPage() {
                   {Math.round(month.home_office_target_ratio * 100)}%)
                 </strong>
               </div>
+              <div className="row">
+                <span className="muted">{t('reports.soll')}</span>
+                <strong>{fmtMinutes(month.expected_minutes)}</strong>
+              </div>
+              <div className="row">
+                <span className="muted">{t('reports.ist')}</span>
+                <strong>{fmtMinutes(month.total_worked_minutes)}</strong>
+              </div>
+              <div className="row">
+                <span className="muted">{t('reports.saldo')}</span>
+                <strong className={month.balance_minutes >= 0 ? 'okText' : 'errorText'}>
+                  {month.balance_minutes >= 0 ? '+' : '-'}
+                  {fmtMinutes(Math.abs(month.balance_minutes))}
+                </strong>
+              </div>
             </>
           )}
         </section>

@@ -198,6 +198,8 @@ class MonthReportResponse(BaseModel):
     home_office_days: int
     home_office_ratio: float
     home_office_target_ratio: float
+    expected_minutes: int = 0
+    balance_minutes: int = 0
     days: list[ReportDay]
 
 
