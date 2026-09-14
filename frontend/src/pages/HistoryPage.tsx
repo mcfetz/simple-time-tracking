@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEventHandler } from 'react'
 
 import { NoteModal } from '../components/NoteModal'
-import { IconPencil, IconTrash } from '../components/icons'
+import { IconPencil, IconPlus, IconTrash } from '../components/icons'
 import { apiFetch } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { formatDateLocal, formatTimeLocal, localIsoDateFromUtc } from '../lib/format'
@@ -329,15 +329,22 @@ export function HistoryPage() {
           {events.length} {t('history.entries')}
         </span>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}>
-          <button type="button" disabled={loading} onClick={startCreate}>
-            + {t('history.createEntry')}
-          </button>
           <button className="secondary" type="button" disabled={loading || !startParam} onClick={() => setStartParam(shiftIsoDate(startParam, -7))}>
             ‹
           </button>
           <input type="date" value={startParam} onChange={(e) => setStartParam(e.target.value)} />
           <button className="secondary" type="button" disabled={loading || !startParam} onClick={() => setStartParam(shiftIsoDate(startParam, 7))}>
             ›
+          </button>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={startCreate}
+            aria-label={t('history.createEntry')}
+            title={t('history.createEntry')}
+            style={{ padding: 8, lineHeight: 0 }}
+          >
+            <IconPlus className="navIcon" />
           </button>
         </div>
       </div>

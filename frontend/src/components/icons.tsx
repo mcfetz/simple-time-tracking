@@ -101,3 +101,12 @@ export function IconTrash(props: IconProps) {
     </SvgIcon>
   )
 }
+
+export function IconPlus(props: IconProps) {
+  return (
+    <SvgIcon {...props}>
+      <path d="M12 5v14" />
+      <path d="M5 12h14" />
+    </SvgIcon>
+  )
+}
