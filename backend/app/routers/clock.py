@@ -121,6 +121,7 @@ def create_event(
         geo_lng=geo_lng,
         geo_accuracy_m=geo_acc,
         client_event_id=payload.client_event_id,
+        source="app",
     )
     db.add(event)
     try:
@@ -156,6 +157,7 @@ def create_event(
         location=event.location,
         geo=geo_out,
         client_event_id=event.client_event_id,
+        source=event.source,
     )
 
 
@@ -223,6 +225,7 @@ def list_events(
                 location=e.location,
                 geo=geo_out,
                 client_event_id=e.client_event_id,
+                source=e.source,
             )
         )
     return out
@@ -313,4 +316,5 @@ def update_event(
         location=event.location,
         geo=geo_out,
         client_event_id=event.client_event_id,
+        source=event.source,
     )

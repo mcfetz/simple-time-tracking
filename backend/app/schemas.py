@@ -76,6 +76,13 @@ class ClockEventResponse(BaseModel):
     location: str | None
     geo: Geo | None
     client_event_id: str | None
+    source: str = "app"
+
+
+class WebhookTokenResponse(BaseModel):
+    token: str
+    created_at: str
+    last_used_at: str | None = None
 
 
 class DailyStatusResponse(BaseModel):

@@ -17,6 +17,7 @@ from app.routers.notes import router as notes_router
 from app.routers.push import router as push_router
 from app.routers.reports import router as reports_router
 from app.routers.settings import router as settings_router
+from app.routers.webhooks import router as webhooks_router
 
 
 NO_STORE_HEADERS = {"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"}
@@ -65,6 +66,7 @@ def create_app() -> FastAPI:
 
     app.include_router(auth_router, prefix="/api")
     app.include_router(clock_router, prefix="/api")
+    app.include_router(webhooks_router, prefix="/api")
     app.include_router(dashboard_router, prefix="/api")
     app.include_router(settings_router, prefix="/api")
     app.include_router(reports_router, prefix="/api")

@@ -344,6 +344,21 @@ export function HistoryPage() {
             >
               <div>
                 {formatTimeLocal(e.ts_utc)}
+                {e.source === 'webhook' ? (
+                  <span
+                    title={t('history.sourceWebhook')}
+                    style={{
+                      marginLeft: 8,
+                      fontSize: 11,
+                      border: '1px solid #d1d5db',
+                      borderRadius: 6,
+                      padding: '1px 6px',
+                      background: '#f3f4f6',
+                    }}
+                  >
+                    {t('history.sourceWebhook')}
+                  </span>
+                ) : null}
               </div>
               <div>{e.type}</div>
               <div className="muted">{e.location ?? '-'}</div>

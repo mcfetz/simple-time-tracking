@@ -203,6 +203,22 @@ class ClockEvent(Base):
 
     client_event_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
+    source: Mapped[str] = mapped_column(String(16), default="app", nullable=False, server_default="app")
+
+    user: Mapped[User] = relationship()
+
+
+class WebhookToken(Base):
+    __tablename__ = "webhook_tokens"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True
+    )
+    token: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     user: Mapped[User] = relationship()
 
 

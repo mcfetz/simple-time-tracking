@@ -48,6 +48,12 @@ export type UserSettings = {
   push_break_minutes?: number[] | null
 }
 
+export type WebhookToken = {
+  token: string
+  created_at: string
+  last_used_at: string | null
+}
+
 export type CreateClockEventRequest = {
   type: 'COME' | 'GO' | 'BREAK_START' | 'BREAK_END'
   location?: 'HOME' | 'OFFICE'
@@ -63,6 +69,7 @@ export type ClockEvent = {
   location: 'HOME' | 'OFFICE' | null
   geo: { lat: number; lng: number; accuracy_m?: number | null } | null
   client_event_id: string | null
+  source: string
 }
 
 export type ReportDay = {

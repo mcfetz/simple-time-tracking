@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { apiFetch } from '../lib/api'
-import type { UserSettings } from '../lib/types'
+import type { UserSettings, WebhookToken } from '../lib/types'
 import { useI18n, type Lang } from '../lib/i18n'
 import { ensurePushPermission, getCurrentPushSubscription, isPushSupported, subscribeToPush, unsubscribeFromPush } from '../lib/push'
 import { useAuth } from '../lib/auth'
@@ -24,6 +24,67 @@ export function SettingsPage() {
   const [pushWorkMinutes, setPushWorkMinutes] = useState('')
   const [pushBreakMinutes, setPushBreakMinutes] = useState('')
 
+  const [webhook, setWebhook] = useState<WebhookToken | null>(null)
+  const [webhookLoading, setWebhookLoading] = useState(false)
+  const [webhookCopied, setWebhookCopied] = useState('')
+
+  function webhookBase(): string {
+    if (typeof window !== 'undefined' && window.location.origin) return window.location.origin
+    return ''
+  }
+
+  async function loadWebhook() {
+    try {
+      const data = await apiFetch<WebhookToken>('/webhooks/token')
+      setWebhook(data)
+    } catch {
+      setWebhook(null)
+    }
+  }
+
+  async function generateWebhook() {
+    if (webhook && !confirm(t('settings.webhookConfirmRegenerate'))) return
+    setWebhookLoading(true)
+    setError(null)
+    try {
+      const data = await apiFetch<WebhookToken>('/webhooks/token', { method: 'POST' })
+      setWebhook(data)
+    } catch (e) {
+      setError((e as { message?: string })?.message || t('errors.generic'))
+    } finally {
+      setWebhookLoading(false)
+    }
+  }
+
+  async function deleteWebhook() {
+    if (!confirm(t('settings.webhookConfirmDelete'))) return
+    setWebhookLoading(true)
+    setError(null)
+    try {
+      await apiFetch('/webhooks/token', { method: 'DELETE' })
+      setWebhook(null)
+    } catch (e) {
+      setError((e as { message?: string })?.message || t('errors.generic'))
+    } finally {
+      setWebhookLoading(false)
+    }
+  }
+
+  async function copyText(value: string) {
+    try {
+      await navigator.clipboard.writeText(value)
+    } catch {
+      const el = document.createElement('textarea')
+      el.value = value
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      el.remove()
+    }
+    setWebhookCopied(t('settings.webhookCopied'))
+    setTimeout(() => setWebhookCopied(''), 1400)
+  }
+
   async function load() {
     setError(null)
     const data = await apiFetch<UserSettings>('/settings/me')
@@ -42,6 +103,7 @@ export function SettingsPage() {
   useEffect(() => {
     setPushSupported(isPushSupported())
     load().catch((e) => setError((e as { message?: string })?.message || t('errors.generic')))
+    loadWebhook()
   }, [])
 
   function parseMinuteList(raw: string): number[] {
@@ -241,6 +303,54 @@ export function SettingsPage() {
             <button type="button" disabled={loading} onClick={() => deleteAccount()} style={{ borderColor: 'rgba(239, 68, 68, 0.35)', color: '#991b1b' }}>
               {t('settings.deleteAccount')}
             </button>
+          </section>
+
+          <section className="card">
+            <h2 style={{ marginTop: 0 }}>{t('settings.webhooks')}</h2>
+            <div className="muted small" style={{ marginBottom: 8 }}>{t('settings.webhookDesc')}</div>
+            {webhook ? (
+              <>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+                  <button type="button" className="secondary" disabled={webhookLoading} onClick={generateWebhook}>
+                    {webhookLoading ? t('common.loading') : t('settings.webhookRegenerate')}
+                  </button>
+                  <button type="button" className="secondary" disabled={webhookLoading} onClick={deleteWebhook} style={{ borderColor: 'rgba(239, 68, 68, 0.35)', color: '#991b1b' }}>
+                    {t('settings.webhookDelete')}
+                  </button>
+                  {webhookCopied ? <span className="muted small" style={{ alignSelf: 'center' }}>{webhookCopied}</span> : null}
+                </div>
+                {(() => {
+                  const base = webhookBase()
+                  const tok = webhook.token
+                  const rows: Array<[string, string]> = [
+                    [t('settings.webhookComeOffice'), `${base}/api/webhooks/${tok}/come?location=OFFICE`],
+                    [t('settings.webhookComeHome'), `${base}/api/webhooks/${tok}/come?location=HOME`],
+                    [t('settings.webhookGo'), `${base}/api/webhooks/${tok}/go`],
+                  ]
+                  return (
+                    <div style={{ display: 'grid', gap: 8 }}>
+                      {rows.map(([label, url]) => (
+                        <div key={label} style={{ display: 'grid', gap: 4, border: '1px solid #e5e7eb', borderRadius: 8, padding: 8 }}>
+                          <strong className="small">{label}</strong>
+                          <div className="muted" style={{ wordBreak: 'break-all', fontSize: 13 }}>{url}</div>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button type="button" className="secondary" onClick={() => copyText(url)}>{t('common.save') === t('common.save') ? 'Copy' : 'Copy'}</button>
+                            <code className="muted" style={{ alignSelf: 'center', fontSize: 12, whiteSpace: 'pre-wrap' }}>{`curl -i ${url}`}</code>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()}
+              </>
+            ) : (
+              <>
+                <div className="muted" style={{ marginBottom: 8 }}>{t('settings.webhookNoToken')}</div>
+                <button type="button" disabled={webhookLoading} onClick={generateWebhook}>
+                  {webhookLoading ? t('common.loading') : t('settings.webhookGenerate')}
+                </button>
+              </>
+            )}
           </section>
 
         </>

@@ -160,6 +160,22 @@ const EN: Dict = {
   'confirm.deleteAccount1': 'Do you really want to delete your account?',
   'confirm.deleteAccount2': 'This is irreversible. Delete now?',
   'settings.saved': 'Saved.',
+
+  'settings.webhooks': 'Webhooks',
+  'settings.webhookDesc': 'Secret URL for COME/GO without login (e.g. for automation / curl). Keep the link private!',
+  'settings.webhookGenerate': 'Generate webhook link',
+  'settings.webhookRegenerate': 'Regenerate',
+  'settings.webhookDelete': 'Remove',
+  'settings.webhookComeOffice': 'Arrive office (GET/POST)',
+  'settings.webhookComeHome': 'Arrive home office (GET/POST)',
+  'settings.webhookGo': 'Leave (GET/POST)',
+  'settings.webhookCopied': 'Copied.',
+  'settings.webhookNoToken': 'No webhook link yet.',
+  'settings.webhookConfirmRegenerate': 'Regenerate? The old link will stop working.',
+  'settings.webhookConfirmDelete': 'Remove webhook link?',
+
+  'history.source': 'Source',
+  'history.sourceWebhook': 'Webhook',
 }
 
 const DE: Dict = {
@@ -317,6 +333,22 @@ const DE: Dict = {
   'confirm.deleteAccount1': 'Willst du dein Konto wirklich löschen?',
   'confirm.deleteAccount2': 'Das ist endgültig und kann nicht rückgängig gemacht werden. Jetzt löschen?',
   'settings.saved': 'Gespeichert.',
+
+  'settings.webhooks': 'Webhooks',
+  'settings.webhookDesc': 'Geheimer Link für Kommen/Gehen ohne Login (z.B. für Automationen / curl). Link geheim halten!',
+  'settings.webhookGenerate': 'Webhook-Link erzeugen',
+  'settings.webhookRegenerate': 'Neu erzeugen',
+  'settings.webhookDelete': 'Entfernen',
+  'settings.webhookComeOffice': 'Kommen Büro (GET/POST)',
+  'settings.webhookComeHome': 'Kommen Home Office (GET/POST)',
+  'settings.webhookGo': 'Gehen (GET/POST)',
+  'settings.webhookCopied': 'Kopiert.',
+  'settings.webhookNoToken': 'Noch kein Webhook-Link.',
+  'settings.webhookConfirmRegenerate': 'Neu erzeugen? Der alte Link wird ungültig.',
+  'settings.webhookConfirmDelete': 'Webhook-Link wirklich entfernen?',
+
+  'history.source': 'Quelle',
+  'history.sourceWebhook': 'Webhook',
 }
 
 function detectInitialLang(): Lang {
