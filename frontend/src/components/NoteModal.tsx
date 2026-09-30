@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useI18n } from '../lib/i18n'
 import { formatDateLocal } from '../lib/format'
 
@@ -23,10 +23,6 @@ export function NoteModal({
 }: Props) {
   const { t, lang } = useI18n()
   const [value, setValue] = useState(initialContent)
-
-  useEffect(() => {
-    setValue(initialContent)
-  }, [initialContent, open])
 
   if (!open) return null
 

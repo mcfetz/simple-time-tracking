@@ -19,7 +19,7 @@ export function SettingsPage() {
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
 
-  const [pushSupported, setPushSupported] = useState(false)
+  const [pushSupported] = useState(() => isPushSupported())
   const [pushEnabled, setPushEnabled] = useState(false)
   const [pushWorkMinutes, setPushWorkMinutes] = useState('')
   const [pushBreakMinutes, setPushBreakMinutes] = useState('')
@@ -102,7 +102,6 @@ export function SettingsPage() {
   }
 
   useEffect(() => {
-    setPushSupported(isPushSupported())
     load().catch((e) => setError((e as { message?: string })?.message || t('errors.generic')))
     loadWebhook()
   }, [])

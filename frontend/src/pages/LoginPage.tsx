@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { useI18n } from '../lib/i18n'
@@ -9,20 +9,21 @@ export function LoginPage() {
   const { t } = useI18n()
   const nav = useNavigate()
 
-  const [flash, setFlash] = useState<string | null>(null)
+  const [flash] = useState<string | null>(() => {
+    try {
+      const msg = sessionStorage.getItem('tt_flash')
+      if (msg) sessionStorage.removeItem('tt_flash')
+      return msg
+    } catch {
+      // sessionStorage unavailable - no flash message
+      return null
+    }
+  })
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    const msg = sessionStorage.getItem('tt_flash')
-    if (msg) {
-      setFlash(msg)
-      sessionStorage.removeItem('tt_flash')
-    }
-  }, [])
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()

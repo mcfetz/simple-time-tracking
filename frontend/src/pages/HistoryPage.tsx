@@ -425,6 +425,7 @@ export function HistoryPage() {
 
       {noteDateLocal ? (
         <NoteModal
+          key={`${noteDateLocal}:${noteInitial}`}
           open={noteOpen}
           dateLocal={noteDateLocal}
           initialContent={noteInitial}

@@ -33,6 +33,7 @@ function setStoredItem(key: string, value: string) {
   try {
     localStorage.setItem(key, value)
   } catch {
+    // storage unavailable (private mode) - cache write is best effort
   }
 }
 
@@ -40,6 +41,7 @@ function removeStoredItem(key: string) {
   try {
     localStorage.removeItem(key)
   } catch {
+    // storage unavailable - nothing to remove
   }
 }
 
@@ -47,6 +49,7 @@ function setSessionItem(key: string, value: string) {
   try {
     sessionStorage.setItem(key, value)
   } catch {
+    // storage unavailable - flash message is best effort
   }
 }
 
@@ -75,6 +78,7 @@ export function AuthProvider(props: { children: ReactNode }) {
           setState({ status: 'authenticated', user: me })
           return
         } catch {
+          // cached token rejected - fall through to a cookie refresh
         }
       }
 

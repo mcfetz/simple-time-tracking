@@ -378,6 +378,7 @@ function detectInitialLang(): Lang {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored === 'de' || stored === 'en') return stored
   } catch {
+    // storage unavailable - fall back to browser language
   }
 
   const navLang = (navigator.language || 'en').toLowerCase()
@@ -386,6 +387,7 @@ function detectInitialLang(): Lang {
   try {
     localStorage.setItem(STORAGE_KEY, initial)
   } catch {
+    // storage unavailable - language is not persisted
   }
 
   return initial
@@ -412,6 +414,7 @@ export function I18nProvider(props: { children: ReactNode }) {
     try {
       localStorage.setItem(STORAGE_KEY, next)
     } catch {
+      // storage unavailable - language is not persisted
     }
     setLangState(next)
   }

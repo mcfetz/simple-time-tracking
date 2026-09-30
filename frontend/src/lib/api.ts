@@ -33,6 +33,7 @@ export function setAccessToken(token: string | null) {
     if (token) localStorage.setItem(ACCESS_TOKEN_KEY, token)
     else localStorage.removeItem(ACCESS_TOKEN_KEY)
   } catch {
+    // storage unavailable (private mode) - keep token in memory only
   }
 }
 
@@ -45,6 +46,7 @@ export function loadAccessTokenFromStorage() {
     const token = localStorage.getItem(ACCESS_TOKEN_KEY)
     if (token) accessToken = token
   } catch {
+    // storage unavailable - start without a persisted token
   }
 }
 
@@ -116,6 +118,7 @@ export async function apiFetch<T>(
       const data = (await res.json()) as { detail?: string }
       message = data.detail || message
     } catch {
+      // non-JSON error body - fall back to the generic message
     }
     throw { status: res.status, message } satisfies ApiError
   }
