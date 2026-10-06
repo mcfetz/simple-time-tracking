@@ -14,9 +14,7 @@ from app.settings import settings
 
 def _format_duration(*, minutes: int, lang: str) -> str:
     if minutes < 60:
-        return (
-            f"{minutes} minutes" if lang == "en" else f"{minutes} Minuten"
-        )
+        return f"{minutes} minutes" if lang == "en" else f"{minutes} Minuten"
 
     h = minutes // 60
     m = minutes % 60
@@ -40,7 +38,7 @@ def _thresholds(value: list[int] | None) -> list[int]:
     for v in value:
         try:
             n = int(v)
-        except Exception:
+        except (TypeError, ValueError):
             continue
         if n <= 0:
             continue
@@ -54,12 +52,14 @@ def _local_day(now_utc: datetime, tz: str) -> date:
     return now_utc.astimezone(ZoneInfo(tz)).date()
 
 
-def _compute_today_minutes(db, *, user: User, now_utc: datetime) -> tuple[date, int, int]:
+def _compute_today_minutes(
+    db, *, user: User, now_utc: datetime
+) -> tuple[date, int, int]:
     tz = user.timezone
     day_local = _local_day(now_utc, tz)
 
-    from app.reporting import day_bounds_utc
     from app.models import ClockEvent
+    from app.reporting import day_bounds_utc
 
     start_utc, end_utc = day_bounds_utc(day_local, tz)
     stmt = (
@@ -72,7 +72,9 @@ def _compute_today_minutes(db, *, user: User, now_utc: datetime) -> tuple[date, 
     rows = list(db.execute(stmt).all())
     events = [(t, ts, loc) for (t, ts, loc) in rows]
 
-    summary = compute_day_summary(day_local=day_local, tz=tz, events=events, now_utc=now_utc)
+    summary = compute_day_summary(
+        day_local=day_local, tz=tz, events=events, now_utc=now_utc
+    )
     return day_local, summary.worked_minutes, summary.break_minutes
 
 
@@ -112,7 +114,7 @@ def _send_due_for_subscription(
         db.add(log)
         try:
             db.commit()
-        except Exception:
+        except Exception:  # noqa: BLE001 - one bad row must not abort the batch
             db.rollback()
             continue
 
@@ -149,8 +151,10 @@ def _send_due_for_subscription(
                 vapid_subject=settings.vapid_subject,
                 payload=payload,
             )
-        except Exception as e:
-            status = getattr(getattr(e, "response", None), "status_code", None) or getattr(getattr(e, "response", None), "status", None)
+        except Exception as e:  # noqa: BLE001 - HTTP client error shape is library-specific
+            status = getattr(
+                getattr(e, "response", None), "status_code", None
+            ) or getattr(getattr(e, "response", None), "status", None)
             if status in (404, 410):
                 sub = db.get(PushSubscription, subscription.id)
                 if sub is not None:
@@ -165,7 +169,9 @@ def tick_once() -> None:
         for user in users:
             if user.settings is None:
                 continue
-            if not (user.settings.push_work_minutes or user.settings.push_break_minutes):
+            if not (
+                user.settings.push_work_minutes or user.settings.push_break_minutes
+            ):
                 continue
 
             subs = list(

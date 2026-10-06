@@ -3,8 +3,7 @@ from __future__ import annotations
 
 import logging
 import secrets
-from datetime import UTC, timedelta
-from zoneinfo import ZoneInfo
+from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import desc, select
@@ -20,7 +19,6 @@ from app.reporting import compute_day_summary, day_bounds_utc
 from app.schemas import ClockEventResponse, Geo, WebhookTokenResponse
 from app.security import get_current_user
 from app.settings import settings
-
 
 logger = logging.getLogger(__name__)
 
@@ -41,12 +39,21 @@ def _as_utc(value):
 
 
 def _last_event(db: Session, user_id: int) -> ClockEvent | None:
-    stmt = select(ClockEvent).where(ClockEvent.user_id == user_id).order_by(desc(ClockEvent.ts_utc)).limit(1)
+    stmt = (
+        select(ClockEvent)
+        .where(ClockEvent.user_id == user_id)
+        .order_by(desc(ClockEvent.ts_utc))
+        .limit(1)
+    )
     return db.scalar(stmt)
 
 
 def _create_event_for_user(
-    db: Session, user: User, event_type: str, location: str | None, offset: int | None = None
+    db: Session,
+    user: User,
+    event_type: str,
+    location: str | None,
+    offset: int | None = None,
 ) -> ClockEvent:
     validate_event_fields(event_type=event_type, location=location)
 
@@ -103,7 +110,9 @@ def _create_event_for_user(
 def _to_response(event: ClockEvent) -> ClockEventResponse:
     geo_out = None
     if event.geo_lat is not None and event.geo_lng is not None:
-        geo_out = Geo(lat=event.geo_lat, lng=event.geo_lng, accuracy_m=event.geo_accuracy_m)
+        geo_out = Geo(
+            lat=event.geo_lat, lng=event.geo_lng, accuracy_m=event.geo_accuracy_m
+        )
     return ClockEventResponse(
         id=event.id,
         ts_utc=_as_utc(event.ts_utc).isoformat(),
@@ -118,10 +127,14 @@ def _to_response(event: ClockEvent) -> ClockEventResponse:
 def _lookup_user_by_token(db: Session, token: str) -> tuple[User, WebhookToken]:
     row = db.scalar(select(WebhookToken).where(WebhookToken.token == token))
     if row is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid webhook token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid webhook token"
+        )
     user = db.get(User, row.user_id)
     if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid webhook token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid webhook token"
+        )
     return user, row
 
 
@@ -135,15 +148,21 @@ def get_webhook_token(
 ):
     row = db.scalar(select(WebhookToken).where(WebhookToken.user_id == current_user.id))
     if row is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No webhook token")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No webhook token"
+        )
     return WebhookTokenResponse(
         token=row.token,
         created_at=_as_utc(row.created_at).isoformat(),
-        last_used_at=_as_utc(row.last_used_at).isoformat() if row.last_used_at else None,
+        last_used_at=_as_utc(row.last_used_at).isoformat()
+        if row.last_used_at
+        else None,
     )
 
 
-@router.post("/token", response_model=WebhookTokenResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/token", response_model=WebhookTokenResponse, status_code=status.HTTP_201_CREATED
+)
 def create_webhook_token(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -168,7 +187,9 @@ def create_webhook_token(
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Token already exists")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Token already exists"
+        )
     db.refresh(row)
     return WebhookTokenResponse(
         token=row.token,
@@ -189,15 +210,20 @@ def delete_webhook_token(
     db.commit()
 
 
-def _handle_webhook_come(db: Session, token: str, location: str | None, offset: int | None = None) -> ClockEventResponse:
+def _handle_webhook_come(
+    db: Session, token: str, location: str | None, offset: int | None = None
+) -> ClockEventResponse:
     user, row = _lookup_user_by_token(db, token)
     if location is None:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="location query param required (HOME or OFFICE)"
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="location query param required (HOME or OFFICE)",
         )
     loc = location.strip().upper()
     if loc not in ("HOME", "OFFICE"):
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid location")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid location"
+        )
     event = _create_event_for_user(db, user, "COME", loc, offset=offset)
     resp = _to_response(event)
     row.last_used_at = _as_utc(event.ts_utc)
@@ -206,7 +232,9 @@ def _handle_webhook_come(db: Session, token: str, location: str | None, offset: 
     return resp
 
 
-def _handle_webhook_go(db: Session, token: str, offset: int | None = None) -> ClockEventResponse:
+def _handle_webhook_go(
+    db: Session, token: str, offset: int | None = None
+) -> ClockEventResponse:
     user, row = _lookup_user_by_token(db, token)
     event = _create_event_for_user(db, user, "GO", None, offset=offset)
     resp = _to_response(event)
@@ -216,10 +244,16 @@ def _handle_webhook_go(db: Session, token: str, offset: int | None = None) -> Cl
     return resp
 
 
-def _trigger_webhook_push(db: Session, user: User, go_event: ClockEvent | None = None) -> None:
+def _trigger_webhook_push(
+    db: Session, user: User, go_event: ClockEvent | None = None
+) -> None:
     if not (settings.vapid_public_key and settings.vapid_private_key):
         return
-    subs = list(db.scalars(select(PushSubscription).where(PushSubscription.user_id == user.id)).all())
+    subs = list(
+        db.scalars(
+            select(PushSubscription).where(PushSubscription.user_id == user.id)
+        ).all()
+    )
     if not subs:
         return
 
@@ -236,7 +270,12 @@ def _trigger_webhook_push(db: Session, user: User, go_event: ClockEvent | None =
             ).all()
         )
         events = [(t, ts, loc) for (t, ts, loc) in rows]
-        summary = compute_day_summary(day_local=day_local, tz=user.timezone, events=events, now_utc=_as_utc(go_event.ts_utc))
+        summary = compute_day_summary(
+            day_local=day_local,
+            tz=user.timezone,
+            events=events,
+            now_utc=_as_utc(go_event.ts_utc),
+        )
         wm = summary.worked_minutes
         hours = wm // 60
         mins = wm % 60
@@ -265,8 +304,10 @@ def _trigger_webhook_push(db: Session, user: User, go_event: ClockEvent | None =
                 vapid_subject=settings.vapid_subject,
                 payload=payload,
             )
-        except Exception as e:
-            status_code = getattr(getattr(e, "response", None), "status_code", None) or getattr(getattr(e, "response", None), "status", None)
+        except Exception as e:  # noqa: BLE001 - HTTP client error shape is library-specific
+            status_code = getattr(
+                getattr(e, "response", None), "status_code", None
+            ) or getattr(getattr(e, "response", None), "status", None)
             if status_code in (404, 410):
                 persisted = db.get(PushSubscription, sub.id)
                 if persisted is not None:
@@ -282,7 +323,9 @@ def _trigger_webhook_push(db: Session, user: User, go_event: ClockEvent | None =
 def webhook_come_get(
     token: str,
     location: str | None = Query(default=None, description="HOME or OFFICE"),
-    offset: int | None = Query(default=None, description="Offset in minutes relative to now"),
+    offset: int | None = Query(
+        default=None, description="Offset in minutes relative to now"
+    ),
     db: Session = Depends(get_db),
 ):
     return _handle_webhook_come(db, token, location, offset=offset)
@@ -292,7 +335,9 @@ def webhook_come_get(
 def webhook_come_post(
     token: str,
     location: str | None = Query(default=None, description="HOME or OFFICE"),
-    offset: int | None = Query(default=None, description="Offset in minutes relative to now"),
+    offset: int | None = Query(
+        default=None, description="Offset in minutes relative to now"
+    ),
     db: Session = Depends(get_db),
 ):
     return _handle_webhook_come(db, token, location, offset=offset)
@@ -301,7 +346,9 @@ def webhook_come_post(
 @router.get("/{token}/go", response_model=ClockEventResponse)
 def webhook_go_get(
     token: str,
-    offset: int | None = Query(default=None, description="Offset in minutes relative to now"),
+    offset: int | None = Query(
+        default=None, description="Offset in minutes relative to now"
+    ),
     db: Session = Depends(get_db),
 ):
     return _handle_webhook_go(db, token, offset=offset)
@@ -310,7 +357,9 @@ def webhook_go_get(
 @router.post("/{token}/go", response_model=ClockEventResponse)
 def webhook_go_post(
     token: str,
-    offset: int | None = Query(default=None, description="Offset in minutes relative to now"),
+    offset: int | None = Query(
+        default=None, description="Offset in minutes relative to now"
+    ),
     db: Session = Depends(get_db),
 ):
     return _handle_webhook_go(db, token, offset=offset)

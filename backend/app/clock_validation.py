@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from fastapi import HTTPException, status
+
+
 def validate_event_fields(*, event_type: str, location: str | None) -> None:
     if event_type not in ("COME", "GO", "BREAK_START", "BREAK_END"):
         raise HTTPException(
@@ -24,4 +26,3 @@ def validate_event_fields(*, event_type: str, location: str | None) -> None:
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Location only allowed for COME",
         )
-

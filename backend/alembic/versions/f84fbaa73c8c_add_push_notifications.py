@@ -5,17 +5,18 @@ Revises: 2f06e12c33fb
 Create Date: 2026-02-17 20:46:44.680262
 
 """
-from typing import Sequence, Union
 
-from alembic import op
+from collections.abc import Sequence
+
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = 'f84fbaa73c8c'
-down_revision: Union[str, Sequence[str], None] = '2f06e12c33fb'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision: str = "f84fbaa73c8c"
+down_revision: str | Sequence[str] | None = "2f06e12c33fb"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:

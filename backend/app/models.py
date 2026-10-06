@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from datetime import date, datetime, UTC
+from datetime import UTC, date, datetime
 
-from sqlalchemy import Date, DateTime, Float, ForeignKey, Index, Integer, JSON, String
+from sqlalchemy import JSON, Date, DateTime, Float, ForeignKey, Index, Integer, String
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -101,7 +101,9 @@ class PushSubscription(Base):
     auth: Mapped[str] = mapped_column(String(256))
     lang: Mapped[str] = mapped_column(String(8), default="en")
 
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now
+    )
     last_seen_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
@@ -135,7 +137,9 @@ class PushNotificationLog(Base):
     date_local: Mapped[date] = mapped_column(Date, index=True)
     kind: Mapped[str] = mapped_column(String(8))
     threshold_minutes: Mapped[int] = mapped_column(Integer)
-    sent_at_utc: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    sent_at_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now
+    )
 
     subscription: Mapped[PushSubscription] = relationship(back_populates="logs")
 
@@ -149,9 +153,13 @@ class PasswordResetToken(Base):
     )
 
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now
+    )
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    used_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
 
 class ClockEventType(str):
@@ -203,7 +211,9 @@ class ClockEvent(Base):
 
     client_event_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
-    source: Mapped[str] = mapped_column(String(16), default="app", nullable=False, server_default="app")
+    source: Mapped[str] = mapped_column(
+        String(16), default="app", nullable=False, server_default="app"
+    )
 
     user: Mapped[User] = relationship()
 
@@ -216,8 +226,12 @@ class WebhookToken(Base):
         ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True
     )
     token: Mapped[str] = mapped_column(String(128), unique=True, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
-    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now
+    )
+    last_used_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     user: Mapped[User] = relationship()
 

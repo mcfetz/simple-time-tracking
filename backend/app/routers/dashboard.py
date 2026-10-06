@@ -41,7 +41,7 @@ def _day_bounds_utc(now_utc: datetime, tz: str) -> tuple[datetime, datetime, str
 
 
 @router.get("/today", response_model=DailyStatusResponse)
-def today(  # noqa: PLR0912, PLR0915
+def today(
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     now_utc = datetime.now(UTC)
@@ -142,7 +142,9 @@ def today(  # noqa: PLR0912, PLR0915
     break_minutes = minutes(break_seconds)
     required_break = required_break_total_minutes(worked_minutes)
     effective_worked = effective_worked_minutes(
-        worked_minutes=worked_minutes, break_minutes=break_minutes, required_break_minutes=required_break
+        worked_minutes=worked_minutes,
+        break_minutes=break_minutes,
+        required_break_minutes=required_break,
     )
     remaining_break = max(0, required_break - break_minutes)
 

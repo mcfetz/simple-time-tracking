@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import PushSubscription, User
+from app.push_service import send_web_push
 from app.schemas import (
     PushSubscriptionRequest,
     PushTestRequest,
@@ -18,7 +19,6 @@ from app.schemas import (
 )
 from app.security import get_current_user
 from app.settings import settings
-from app.push_service import send_web_push
 
 router = APIRouter(prefix="/push", tags=["push"])
 

@@ -39,5 +39,5 @@ def send_email(*, to: str, subject: str, body_text: str) -> None:
     finally:
         try:
             server.quit()
-        except Exception:
+        except Exception:  # noqa: S110, BLE001 - must not mask the send error
             pass

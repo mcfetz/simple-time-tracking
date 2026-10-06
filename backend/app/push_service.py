@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 
 from pywebpush import webpush
 
@@ -13,9 +14,9 @@ def send_web_push(
     vapid_public_key: str,
     vapid_private_key: str,
     vapid_subject: str,
-    payload: dict[str, object],
+    payload: Mapping[str, object],
 ) -> None:
-    subscription_info = {
+    subscription_info: dict[str, str | bytes | dict[str, str | bytes]] = {
         "endpoint": endpoint,
         "keys": {"p256dh": p256dh, "auth": auth},
     }

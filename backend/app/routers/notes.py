@@ -11,7 +11,6 @@ from app.models import DayNote, User, utc_now
 from app.schemas import DayNoteResponse, UpsertDayNoteRequest
 from app.security import get_current_user
 
-
 router = APIRouter(prefix="/notes", tags=["notes"])
 
 

@@ -6,16 +6,16 @@ Create Date: 2026-08-27 10:00:00.000000
 
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 revision: str = "c3a9e1b7f042"
-down_revision: Union[str, Sequence[str], None] = "16279d9e2d25"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | Sequence[str] | None = "16279d9e2d25"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -36,8 +36,12 @@ def upgrade() -> None:
         sa.UniqueConstraint("token"),
         sa.UniqueConstraint("user_id"),
     )
-    op.create_index(op.f("ix_webhook_tokens_token"), "webhook_tokens", ["token"], unique=True)
-    op.create_index(op.f("ix_webhook_tokens_user_id"), "webhook_tokens", ["user_id"], unique=True)
+    op.create_index(
+        op.f("ix_webhook_tokens_token"), "webhook_tokens", ["token"], unique=True
+    )
+    op.create_index(
+        op.f("ix_webhook_tokens_user_id"), "webhook_tokens", ["user_id"], unique=True
+    )
 
 
 def downgrade() -> None:

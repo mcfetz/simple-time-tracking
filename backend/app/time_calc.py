@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 
 
 @dataclass(frozen=True)
@@ -34,7 +34,9 @@ def required_break_total_minutes(net_work_minutes: int) -> int:
     return 0
 
 
-def effective_worked_minutes(*, worked_minutes: int, break_minutes: int, required_break_minutes: int) -> int:
+def effective_worked_minutes(
+    *, worked_minutes: int, break_minutes: int, required_break_minutes: int
+) -> int:
     deficit = max(0, required_break_minutes - break_minutes)
     return max(0, worked_minutes - deficit)
 

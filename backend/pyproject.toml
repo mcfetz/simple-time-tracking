@@ -17,3 +17,8 @@ dependencies = [
     "sqlalchemy>=2.0.46",
     "uvicorn[standard]>=0.40.0",
 ]
+
+[tool.ruff]
+target-version = "py311"
+# historical migrations are frozen artifacts; style rules on them only add noise
+extend-exclude = ["alembic/versions"]

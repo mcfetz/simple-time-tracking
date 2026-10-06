@@ -7,7 +7,17 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import AbsenceReason, User, UserSettings, utc_datetime, utc_now
+from app.email import send_email
+from app.models import (
+    AbsenceReason,
+    AuthSession,
+    PasswordResetToken,
+    User,
+    UserSettings,
+    utc_datetime,
+    utc_now,
+)
+from app.password_reset import expires_at, generate_reset_token, hash_reset_token
 from app.schemas import (
     AuthResponse,
     LoginRequest,
@@ -27,11 +37,7 @@ from app.security import (
     rotate_auth_session,
     verify_password,
 )
-from app.password_reset import expires_at, generate_reset_token, hash_reset_token
-from app.email import send_email
-from app.models import AuthSession, PasswordResetToken
 from app.settings import settings
-
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -81,7 +87,9 @@ def register(
     _set_refresh_cookie(response=response, refresh_token=refresh)
 
     token = TokenResponse(
-        access_token=create_access_token(user_id=user.id, token_version=user.token_version)
+        access_token=create_access_token(
+            user_id=user.id, token_version=user.token_version
+        )
     )
     return AuthResponse(
         token=token,
@@ -103,7 +111,9 @@ def login(payload: LoginRequest, response: Response, db: Session = Depends(get_d
     _set_refresh_cookie(response=response, refresh_token=refresh)
 
     token = TokenResponse(
-        access_token=create_access_token(user_id=user.id, token_version=user.token_version)
+        access_token=create_access_token(
+            user_id=user.id, token_version=user.token_version
+        )
     )
     return AuthResponse(
         token=token,
@@ -140,7 +150,9 @@ def refresh(
         )
 
     token = TokenResponse(
-        access_token=create_access_token(user_id=user.id, token_version=user.token_version)
+        access_token=create_access_token(
+            user_id=user.id, token_version=user.token_version
+        )
     )
     return AuthResponse(
         token=token,
@@ -173,7 +185,9 @@ def me(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/password-reset/request")
-def request_password_reset(payload: PasswordResetRequest, db: Session = Depends(get_db)):
+def request_password_reset(
+    payload: PasswordResetRequest, db: Session = Depends(get_db)
+):
     email = payload.email.lower().strip()
     if not email:
         return {"status": "ok"}
@@ -216,7 +230,9 @@ def confirm_password_reset(
         raise HTTPException(status_code=400, detail="Invalid token")
 
     token_hash = hash_reset_token(token)
-    row = db.scalar(select(PasswordResetToken).where(PasswordResetToken.token_hash == token_hash))
+    row = db.scalar(
+        select(PasswordResetToken).where(PasswordResetToken.token_hash == token_hash)
+    )
     if row is None:
         raise HTTPException(status_code=400, detail="Invalid token")
 

@@ -11,7 +11,6 @@ from app.models import AuthSession, User, UserSettings, utc_now
 from app.schemas import UpdateUserSettingsRequest, UserSettingsResponse
 from app.security import get_current_user
 
-
 router = APIRouter(prefix="/settings", tags=["settings"])
 
 
@@ -87,7 +86,9 @@ def delete_my_account(
     current_user: User = Depends(get_current_user),
 ):
     sessions = list(
-        db.scalars(select(AuthSession).where(AuthSession.user_id == current_user.id)).all()
+        db.scalars(
+            select(AuthSession).where(AuthSession.user_id == current_user.id)
+        ).all()
     )
     now = utc_now()
     for s in sessions:

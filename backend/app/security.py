@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import secrets
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 
 import bcrypt
 from fastapi import Depends, HTTPException, status
@@ -17,7 +17,6 @@ from app.db import get_db
 from app.models import AuthSession, User, utc_now
 from app.settings import settings
 
-
 http_bearer = HTTPBearer(auto_error=False)
 
 
@@ -29,7 +28,7 @@ def _as_utc(value: datetime) -> datetime:
 
 def _password_bytes(password: str) -> bytes:
     raw = password.encode("utf-8")
-    if len(raw) > 72:  # noqa: PLR2004
+    if len(raw) > 72:
         return hashlib.sha256(raw).digest()
     return raw
 

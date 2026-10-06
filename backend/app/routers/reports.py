@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, UTC
-
+from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -39,7 +38,7 @@ def _week_start(d: date) -> date:
 
 
 @router.get("/week", response_model=WeekReportResponse)
-def week_report(  # noqa: PLR0915
+def week_report(
     start: str | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -208,7 +207,12 @@ def _report_range(
     note_stmt = (
         select(DayNote.date_local)
         .where(DayNote.user_id == current_user.id)
-        .where(and_(DayNote.date_local >= start_local, DayNote.date_local < end_local_exclusive))
+        .where(
+            and_(
+                DayNote.date_local >= start_local,
+                DayNote.date_local < end_local_exclusive,
+            )
+        )
     )
     note_days = {d.isoformat() for d in db.execute(note_stmt).scalars().all()}
     reason_ids = {a.reason_id for a in absences}
@@ -311,17 +315,24 @@ def _report_range(
 
     today_local = datetime.now(UTC).astimezone(zone).date()
     expected_total = 0
-    for d in iter_local_days(start_local, min(end_local_exclusive, today_local + timedelta(days=1))):
+    for d in iter_local_days(
+        start_local, min(end_local_exclusive, today_local + timedelta(days=1))
+    ):
         if d > today_local:
             continue
-        if current_user.settings.overtime_start_date and d < current_user.settings.overtime_start_date:
+        if (
+            current_user.settings.overtime_start_date
+            and d < current_user.settings.overtime_start_date
+        ):
             continue
         has_absence = any(a.start_date <= d <= a.end_date for a in absences)
         if has_absence:
             continue
         if d.weekday() >= 5:
             continue
-        expected_total += current_user.settings.daily_target_minutes if current_user.settings else 468
+        expected_total += (
+            current_user.settings.daily_target_minutes if current_user.settings else 468
+        )
     balance = total_worked - expected_total
 
     return MonthReportResponse(
@@ -341,7 +352,7 @@ def _report_range(
 
 
 @router.get("/month", response_model=MonthReportResponse)
-def month_report(  # noqa: PLR0912
+def month_report(
     month: str | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -355,15 +366,15 @@ def month_report(  # noqa: PLR0912
         mon = today_local.month
     else:
         parts = month.split("-")
-        if len(parts) != 2:  # noqa: PLR2004
+        if len(parts) != 2:
             raise HTTPException(status_code=422, detail="Invalid month")
         year = int(parts[0])
         mon = int(parts[1])
-        if mon < 1 or mon > 12:  # noqa: PLR2004
+        if mon < 1 or mon > 12:
             raise HTTPException(status_code=422, detail="Invalid month")
 
     month_start = date(year, mon, 1)
-    month_end = date(year + 1, 1, 1) if mon == 12 else date(year, mon + 1, 1)  # noqa: PLR2004
+    month_end = date(year + 1, 1, 1) if mon == 12 else date(year, mon + 1, 1)
 
     return _report_range(db, current_user, month_start, month_end)
 
@@ -389,7 +400,11 @@ def alltime_report(
     tz = current_user.timezone
     zone = ZoneInfo(tz)
     today_local = datetime.now(UTC).astimezone(zone).date()
-    start_local = current_user.settings.overtime_start_date if current_user.settings and current_user.settings.overtime_start_date else None
+    start_local = (
+        current_user.settings.overtime_start_date
+        if current_user.settings and current_user.settings.overtime_start_date
+        else None
+    )
     if start_local is None:
         earliest = db.scalar(
             select(ClockEvent.ts_utc)
@@ -399,7 +414,9 @@ def alltime_report(
         )
         if earliest is None:
             # no events at all -> empty range ending tomorrow
-            return _report_range(db, current_user, today_local, today_local + timedelta(days=1))
+            return _report_range(
+                db, current_user, today_local, today_local + timedelta(days=1)
+            )
         start_local = earliest.astimezone(zone).date()
     end_local_exclusive = today_local + timedelta(days=1)
     # clamp: if overtime_start_date is in the future relative to earliest event, still respect it

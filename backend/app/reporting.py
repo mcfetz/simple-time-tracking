@@ -52,7 +52,7 @@ def day_bounds_utc(day_local: date, tz: str) -> tuple[datetime, datetime]:
     return start_local.astimezone(UTC), end_local.astimezone(UTC)
 
 
-def compute_day_summary(  # noqa: PLR0912, PLR0913, PLR0915
+def compute_day_summary(
     *,
     day_local: date,
     tz: str,
@@ -153,7 +153,9 @@ def compute_day_summary(  # noqa: PLR0912, PLR0913, PLR0915
     required_cont = required_break_continuous_minutes(worked_minutes)
     max_cont = max_continuous_break_minutes(break_intervals)
     effective_worked = effective_worked_minutes(
-        worked_minutes=worked_minutes, break_minutes=break_minutes, required_break_minutes=required_break
+        worked_minutes=worked_minutes,
+        break_minutes=break_minutes,
+        required_break_minutes=required_break,
     )
 
     max_daily_work_exceeded = effective_worked > 10 * 60
