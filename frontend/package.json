@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prepare": "cd .. && husky"
   },
   "dependencies": {
     "chart.js": "^4.5.1",
@@ -27,6 +28,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.6",
     "globals": "^17.13.0",
+    "husky": "^9.1.7",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.70.0",
     "vite": "^8.3.2",

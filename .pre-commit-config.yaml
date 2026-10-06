@@ -1,0 +1,17 @@
+# Local backend checks, pinned via uv.lock (dependency-groups: dev).
+# Requires uv on the machine: https://docs.astral.sh/uv/
+repos:
+  - repo: local
+    hooks:
+      - id: backend-ruff
+        name: ruff (check + format, backend)
+        entry: bash -c 'cd backend && uv run ruff check . && uv run ruff format --check .'
+        language: system
+        pass_filenames: false
+        files: ^backend/.*\.py$
+      - id: backend-ty
+        name: ty type check (backend)
+        entry: bash -c 'cd backend && uv run ty check .'
+        language: system
+        pass_filenames: false
+        files: ^backend/.*\.py$
