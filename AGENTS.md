@@ -33,7 +33,7 @@ Frontend (`frontend/`):
 
 ### What to include
 - Short title: `<project name>: <topic> <status>` (e.g. `simple-time-tracking: ruff/ty clean + CI lint active`).
-- Message: 2–4 sentences in German:
+- Message: 2–4 sentences in the language the user is writing in:
   1. what was done (the key points, no file list),
   2. last commit SHA(s) + that everything was pushed to all remotes,
   3. verification result (e.g. "Lint green, Docker build green"),
