@@ -23,6 +23,32 @@ Frontend (`frontend/`):
 - Versions-Pinning: `ruff`/`ty` in `[dependency-groups] dev` (`backend/pyproject.toml`), gefixt über `uv.lock` (`uv sync --frozen`). GitHub-Action-Refs exakt pinnen (z. B. `astral-sh/setup-uv@v10.2.0`, es gibt kein rolling `v10`-Tag).
 - Dependabot-Minor/Patch-PRs mergen; Major-Bumps kritisch prüfen (bei eingeschränkter Peer-Lint-Kompatibilität ggf. abwarten).
 
+## Abschluss-Notification per ntfy
+
+### Wann
+- **Immer dann, wenn eine Arbeitseinheit fertig ist**: Änderungen validiert (Lint/Build/Tests) UND auf alle Remotes gepusht. Nie vor dem Push, nie für nur lokal angedachte/gestoppte Arbeit.
+- **Eine Notification pro Arbeitseinheit**, nicht pro Commit (mehrere Commits → eine Zusammenfassung mit allen SHAs).
+- Keine Notifications für: Zwischenstände, reine Informationsantworten, Fragen, ungeprüfte Arbeit.
+- Optional (empfohlen): kurze Fehler-Notification, wenn Arbeit blockiert oder abgebrochen werden musste (Was? Warum? Was ist offen?).
+
+### Was reingeschrieben wird
+- Titel kurz: `<projektname>: <thema> <status>` (z.B. `simple-time-tracking: ruff/ty sauber + CI-Lint aktiv`).
+- Message: 2–4 Sätze auf Deutsch:
+  1. was gemacht wurde (die Kernpunkte, keine Dateiliste),
+  2. letzte(n) Commit-SHA(s) + dass auf alle Remotes gepusht wurde,
+  3. Verifikationsergebnis (z.B. „Lint grün, Docker-Build grün"),
+  4. offene Risiken/Warnungen (z.B. rote Neben-Runs, Security-Alerts).
+- Keine Secrets, keine langen Logs, kein Markdown nötig (ntfy zeigt plain text).
+
+### Wie (in opencode)
+- Tool `ntfy_ntfy_me` mit `title` + `message` aufrufen; Server/Topic kommen aus den Env-Variablen `NTFY_URL`/`NTFY_TOPIC`. Token falls nötig über `NTFY_TOKEN`/accessToken, **nie hartkodieren**.
+- Ohne eigenes Tool (curl):
+  `curl -d "message" -H "Title: <projektname>: ..." "$NTFY_URL/$NTFY_TOPIC"`
+
+### Referenz-Beispiel
+Title: `simple-time-tracking: ruff/ty sauber + CI-Lint aktiv`
+Message: `Ruff 293→0, ty 69→0, CI-Lint-Job (ruff+ty) grün, Docker-Build grün. 5 Commits gepusht auf beide Remotes (letzter: aa7eb4c). Hinweis: 9 offene Dependabot-Security-Alerts (3 high).`
+
 ## Replikations-Vorlage (zum Mitnehmen in andere Repos)
 Wenn in einem anderen Repository dieselbe QA-Baseline eingerichtet werden soll, dort ausführen:
 
