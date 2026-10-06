@@ -22,3 +22,9 @@ dependencies = [
 target-version = "py311"
 # historical migrations are frozen artifacts; style rules on them only add noise
 extend-exclude = ["alembic/versions"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.10",
+    "ty>=0.0.84",
+]
