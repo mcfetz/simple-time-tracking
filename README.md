@@ -230,8 +230,8 @@ docker run -d \
 
 This repository also includes a `docker-compose.yml` that starts:
 
-- `web` (nginx serving the built PWA)
-- `api` (FastAPI backend)
+- `frontend` (nginx serving the built PWA)
+- `backend` (FastAPI backend)
 - `push-worker` (**optional**, sends Web Push notifications)
 
 ### 1) Configure environment variables
