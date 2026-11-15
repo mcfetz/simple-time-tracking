@@ -10,6 +10,7 @@ from app.db import get_db
 from app.models import AuthSession, User, UserSettings, utc_now
 from app.schemas import UpdateUserSettingsRequest, UserSettingsResponse
 from app.security import get_current_user
+from app.settings import settings as app_settings
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
@@ -99,4 +100,4 @@ def delete_my_account(
         db.delete(user)
     db.commit()
 
-    response.delete_cookie(key="tt_refresh", path="/auth")
+    response.delete_cookie(key="tt_refresh", path=app_settings.cookie_path)

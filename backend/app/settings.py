@@ -20,6 +20,7 @@ class Settings(BaseSettings):
 
     cookie_secure: bool = False
     cookie_samesite: Literal["lax", "strict", "none"] = "lax"
+    cookie_path: str = "/api/auth"
 
     vapid_public_key: str = ""
     vapid_private_key: str = ""

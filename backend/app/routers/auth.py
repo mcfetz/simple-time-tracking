@@ -51,7 +51,7 @@ def _set_refresh_cookie(*, response: Response, refresh_token: str) -> None:
         secure=settings.cookie_secure,
         samesite=samesite,
         max_age=settings.refresh_token_days * 24 * 60 * 60,
-        path="/auth",
+        path=settings.cookie_path,
     )
 
 
@@ -134,7 +134,7 @@ def refresh(
 
     auth_session = get_valid_auth_session(db=db, refresh_token=refresh_cookie)
     if auth_session is None:
-        response.delete_cookie(key="tt_refresh", path="/auth")
+        response.delete_cookie(key="tt_refresh", path=settings.cookie_path)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
         )
@@ -144,7 +144,7 @@ def refresh(
 
     user = db.get(User, auth_session.user_id)
     if user is None:
-        response.delete_cookie(key="tt_refresh", path="/auth")
+        response.delete_cookie(key="tt_refresh", path=settings.cookie_path)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
         )
@@ -172,7 +172,7 @@ def logout(
             auth_session.revoked_at = utc_now()
             db.commit()
 
-    response.delete_cookie(key="tt_refresh", path="/auth")
+    response.delete_cookie(key="tt_refresh", path=settings.cookie_path)
 
 
 @router.get("/me", response_model=UserPublic)

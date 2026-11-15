@@ -224,6 +224,7 @@ docker run -d \
 - `TT_VAPID_PUBLIC_KEY`, `TT_VAPID_PRIVATE_KEY`, `TT_VAPID_SUBJECT` - For Web Push notifications
 - `TT_BASE_URL` - Frontend origin for CORS (default: http://localhost:5000)
 - `TT_SQLITE_PATH` - Database path (default: /app/data/app.db)
+- `TT_COOKIE_PATH` - Path des Refresh-Cookies `tt_refresh` (default: /api/auth; muss dem Pfad entsprechen, unter dem der Browser die API erreicht)
 
 ### Docker Compose (Multi-Container)
 
