@@ -7,7 +7,7 @@ from sqlalchemy import select
 
 from app.db import SessionLocal
 from app.models import PushNotificationLog, PushSubscription, User
-from app.push_service import send_web_push
+from app.push_service import send_web_push, subscription_rejected
 from app.reporting import compute_day_summary
 from app.settings import settings
 
@@ -152,10 +152,7 @@ def _send_due_for_subscription(
                 payload=payload,
             )
         except Exception as e:  # noqa: BLE001 - HTTP client error shape is library-specific
-            status = getattr(
-                getattr(e, "response", None), "status_code", None
-            ) or getattr(getattr(e, "response", None), "status", None)
-            if status in (404, 410):
+            if subscription_rejected(e):
                 sub = db.get(PushSubscription, subscription.id)
                 if sub is not None:
                     db.delete(sub)

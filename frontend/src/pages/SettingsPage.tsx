@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { apiFetch } from '../lib/api'
 import type { UserSettings, WebhookToken } from '../lib/types'
 import { useI18n, type Lang } from '../lib/i18n'
-import { ensurePushPermission, getCurrentPushSubscription, isPushSupported, subscribeToPush, unsubscribeFromPush } from '../lib/push'
+import { ensurePushPermission, getCurrentPushSubscription, isPushSupported, repairPushSubscription, subscribeToPush, unsubscribeFromPush } from '../lib/push'
 import { useAuth } from '../lib/auth'
 import { useNavigate } from 'react-router-dom'
 
@@ -97,6 +97,7 @@ export function SettingsPage() {
     setPushWorkMinutes((data.push_work_minutes ?? []).join(', '))
     setPushBreakMinutes((data.push_break_minutes ?? []).join(', '))
 
+    await repairPushSubscription(i18n.lang).catch(() => false)
     const sub = await getCurrentPushSubscription()
     setPushEnabled(Boolean(sub))
   }

@@ -22,6 +22,27 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   return outputArray
 }
 
+function applicationServerKeyMatches(sub: PushSubscription, applicationServerKey: Uint8Array): boolean {
+  const current = sub.options?.applicationServerKey
+  if (!current) return false
+  const bytes = new Uint8Array(current)
+  if (bytes.length !== applicationServerKey.length) return false
+  return bytes.every((value, index) => value === applicationServerKey[index])
+}
+
+async function fetchVapidPublicKey(): Promise<string> {
+  const keyResp = await apiFetch<{ public_key: string }>('/push/vapid-public-key')
+  return keyResp.public_key
+}
+
+async function serviceWorkerRegistration(): Promise<ServiceWorkerRegistration> {
+  const readyPromise = navigator.serviceWorker.ready
+  const timeoutPromise = new Promise<ServiceWorkerRegistration>((_resolve, reject) => {
+    window.setTimeout(() => reject(new Error('errors.pushNoServiceWorker')), 4000)
+  })
+  return Promise.race([readyPromise, timeoutPromise])
+}
+
 export function isPushSupported(): boolean {
   return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
 }
@@ -33,18 +54,20 @@ export async function ensurePushPermission(): Promise<NotificationPermission> {
 
 export async function subscribeToPush(lang: Lang): Promise<void> {
   if (!('serviceWorker' in navigator)) throw new Error('errors.pushNotSupported')
-  const keyResp = await apiFetch<{ public_key: string }>('/push/vapid-public-key')
-  const publicKey = keyResp.public_key
+  const publicKey = await fetchVapidPublicKey()
   if (!publicKey) throw new Error('errors.pushMissingVapidKey')
 
-  const readyPromise = navigator.serviceWorker.ready
-  const timeoutPromise = new Promise<ServiceWorkerRegistration>((_resolve, reject) => {
-    window.setTimeout(() => reject(new Error('errors.pushNoServiceWorker')), 4000)
-  })
-  const reg = await Promise.race([readyPromise, timeoutPromise])
+  const reg = await serviceWorkerRegistration()
+  const applicationServerKey = urlBase64ToUint8Array(publicKey)
+
+  const existing = await reg.pushManager.getSubscription()
+  if (existing && !applicationServerKeyMatches(existing, applicationServerKey)) {
+    await existing.unsubscribe()
+  }
+
   const sub = await reg.pushManager.subscribe({
     userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(publicKey),
+    applicationServerKey,
   })
 
   const json = sub.toJSON() as PushSubscriptionJson
@@ -56,6 +79,20 @@ export async function subscribeToPush(lang: Lang): Promise<void> {
       lang,
     },
   })
+}
+
+export async function repairPushSubscription(lang: Lang): Promise<boolean> {
+  if (!isPushSupported() || Notification.permission !== 'granted') return false
+  const reg = await navigator.serviceWorker.ready
+  const existing = await reg.pushManager.getSubscription()
+  if (!existing) return false
+
+  const publicKey = await fetchVapidPublicKey()
+  if (!publicKey) return false
+  if (applicationServerKeyMatches(existing, urlBase64ToUint8Array(publicKey))) return false
+
+  await subscribeToPush(lang)
+  return true
 }
 
 export async function unsubscribeFromPush(): Promise<void> {
