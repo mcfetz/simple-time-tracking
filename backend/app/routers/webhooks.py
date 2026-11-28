@@ -14,7 +14,7 @@ from app.absence_service import local_date_from_utc, user_has_absence_on_date
 from app.clock_validation import validate_event_fields
 from app.db import get_db
 from app.models import ClockEvent, PushSubscription, User, WebhookToken, utc_now
-from app.push_service import send_web_push
+from app.push_service import send_web_push, subscription_rejected
 from app.reporting import compute_day_summary, day_bounds_utc
 from app.schemas import ClockEventResponse, Geo, WebhookTokenResponse
 from app.security import get_current_user
@@ -305,10 +305,7 @@ def _trigger_webhook_push(
                 payload=payload,
             )
         except Exception as e:  # noqa: BLE001 - HTTP client error shape is library-specific
-            status_code = getattr(
-                getattr(e, "response", None), "status_code", None
-            ) or getattr(getattr(e, "response", None), "status", None)
-            if status_code in (404, 410):
+            if subscription_rejected(e):
                 persisted = db.get(PushSubscription, sub.id)
                 if persisted is not None:
                     db.delete(persisted)
